@@ -13,10 +13,6 @@ LifeLink is a web application that connects people who need blood or organs with
 - **Admin dashboard.** Statistics, charts, critical requests, request and donor management, password reset, an audit log, database export and system reset.
 - **Privacy.** Passwords are stored as salted SHA-256 hashes. Search results show only a donor's first name and last initial, and a donor's phone number is revealed only after the seeker provides their own contact details.
 
-## Live demo
-
-https://ritamonisonowal2.github.io/lifelink/
-
 ## Getting started
 
 ### Requirements
@@ -25,12 +21,7 @@ A modern web browser (Chrome, Edge or Firefox). No installation, server or inter
 
 ### Run locally
 
-```bash
-git clone https://github.com/ritamonisonowal2/lifelink.git
-cd lifelink
-```
-
-Then open `index.html` in your browser.
+Download the project files and extract them to a folder, then open `index.html` in your browser.
 
 To serve the project over HTTP instead:
 
