@@ -1,135 +1,123 @@
-# 🩸 LifeLink — Organ & Blood Matching System
+# LifeLink: Organ & Blood Matching System
 
-A complete DBMS-driven web application that connects **people who need blood or organs** with compatible
-**blood and organ donors**. Built with **HTML, CSS, JavaScript and SQL** (SQLite
-relational DBMS) — everything runs locally, no internet or server install needed.
+LifeLink is a web application that connects people who need blood or organs with compatible donors. It is a DBMS-focused project built only with HTML, CSS, JavaScript and SQL. The database is SQLite, running in the browser through [sql.js](https://github.com/sql-js/sql.js), so no server or installation is needed.
 
----
+## Features
 
-## ▶ How to run
+- **Public donor search.** Anyone can pick a patient's blood group (and optionally a city) and see compatible donors ranked by exact group, then compatible groups, then city. No login is required.
+- **Contact and requests.** A seeker leaves a name and phone number to receive the selected donors' contact details, or posts an open request that compatible donors see on their dashboard.
+- **Request tracking.** A seeker can check the status of a request, or cancel it, using the request number and phone number.
+- **Donor accounts.** Donors register with a name, email and password, then complete and edit their profile (blood group, organ, age, city, phone) and set their availability.
+- **Donation approval.** Donors record donations, and the administrator approves or rejects them. Approved donations update the blood stock automatically.
+- **Blood stock.** Stock per blood group with OK, LOW and OUT status. Fulfilling a blood request deducts stock.
+- **Admin dashboard.** Statistics, charts, critical requests, request and donor management, password reset, an audit log, database export and system reset.
+- **Privacy.** Passwords are stored as salted SHA-256 hashes. Search results show only a donor's first name and last initial, and a donor's phone number is revealed only after the seeker provides their own contact details.
 
-1. Open the project folder.
-2. **Double-click `index.html`** (works in Chrome / Edge / Firefox).
-3. That's it — the SQLite database is created automatically inside the browser and
-   every change is saved, even after refresh.
+## Live demo
 
-> Optional: double-click **`start-server.bat`** instead to serve the site at
-> `http://127.0.0.1:8931` — handy for a projector demo. It uses only built-in
-> Windows PowerShell, nothing to install.
+https://ritamonisonowal2.github.io/lifelink/
 
-> Everything runs offline. The database engine (sql.js — SQLite compiled to run in
-> the browser) and Chart.js are included in the `vendor/` folder.
+## Getting started
 
-### First run — a clean, empty platform
+### Requirements
 
-The system ships with **no sample data**: no fake donors, requests, stock or accounts. Only the medical
-blood-compatibility reference table is loaded. Everything you see is created through the website itself.
+A modern web browser (Chrome, Edge or Firefox). No installation, server or internet connection is needed to run the project.
 
-1. Open **Login** → click **Set up the administrator account** (shown only until an admin exists) and create the admin.
-2. Donors register from **Become a donor**; seekers search and post requests with no account.
-3. Charts and counters stay at zero / show "no data yet" messages until real records exist.
+### Run locally
 
-### How it works (like a normal website — no hospital accounts)
-
-1. **Anyone can search, no login.** Pick a blood group (and optionally city) on the home page or **Find Donor** —
-   compatible donors appear instantly, ranked: exact group first, same city next.
-2. **Contact donors.** The seeker enters their name + phone and gets the donors' numbers. This saves a
-   **Request** and links the donors. If nobody is available, the seeker can **post an open request**
-   that compatible donors see on their dashboard.
-3. **Donors register in 20 seconds** (name, email, password). Inside the dashboard they see who needs them *first*,
-   then add blood group, city and age.
-4. **The admin** oversees all requests, marks them fulfilled (the **TRIGGER** deducts blood stock), and manages
-   donors, stock and analytics.
-
-> Privacy note: a donor's phone number is shown only after a seeker leaves their own contact details,
-> and only a first name + last initial is shown in search results.
-
-**Recommended walkthrough (2 minutes):**
-0. Create the admin, then register a donor and record a donation from the donor dashboard.
-1. Home → choose **B+** → **Find donors now** → tick donors → **Get contact numbers** (no login).
-2. Login as admin → set that request to **fulfilled** → the **TRIGGER** deducts blood stock.
-3. Admin → charts, low-stock warnings and the critical-request VIEW are live.
-4. Register a new donor → see suggestions first, then fill in the details.
-
----
-
-## ✨ Features → Technologies map
-
-| # | Feature | HTML | CSS | JavaScript | SQL / DBMS |
-|---|---------|------|-----|------------|------------|
-| 1 | Login / Register (Donor, Admin) | Login & signup forms | Clean layout | Validation, role-based pages | `Users` table, `UNIQUE` + `NOT NULL` constraints |
-| 2 | Donor Registration | Registration form | Form styling | Form handling | `INSERT`, `CHECK` constraints (age 18–65, valid group/organ) |
-| 3 | Blood Request | Request form, status table | Status colours | Status updates | `Request` table, foreign keys, `CHECK` on units/urgency/status |
-| 4 | Auto Matching | Results table | Critical-case highlight | Displays matches | `JOIN` with `CompatibilityRule`, `ORDER BY`, `NOT EXISTS` |
-| 5 | Blood Stock | Stock table | Low-stock warning | Refreshes display | `TRIGGER` adds stock on donation & deducts on fulfilment |
-| 6 | Dashboard | Cards & charts | Visual design | Draws charts (Chart.js) | `GROUP BY`, `VIEW`s |
-
-## 🗄️ DBMS concepts demonstrated
-
-| Concept | Where it appears |
-|---------|------------------|
-| **Normalization (1NF → 3NF)** | `docs/normalization.md` — a request record decomposed step by step |
-| **Trigger** | `trg_stock_on_donation` (stock ↑ when a donation is inserted) · `trg_stock_on_fulfilment` (stock ↓ when a blood request is fulfilled) |
-| **View** | `vw_critical_requests` · `vw_stock_status` · `vw_donor_group_summary` |
-| **Constraints** | `PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `NOT NULL`, `CHECK` (blood groups, organs, age, units, statuses) |
-| **Joins & aggregation** | Auto-matching `JOIN … ORDER BY`, dashboard `GROUP BY`, subqueries with `NOT EXISTS` |
-
-## 📁 Project structure
-
-```
-organ-blood-matching/
-├── index.html            Landing page (live stats from the DB)
-├── login.html            Login (role-based redirect)
-├── find.html             Public donor search + contact (no login)
-├── register.html         Simple donor sign-up
-├── donor.html            Donor dashboard (availability, requests, donations)
-├── admin.html            Admin console (charts, tables, tools)
-├── start-server.bat      One-click local web server (optional)
-├── css/
-│   └── style.css         Global design system
-├── js/
-│   ├── db.js             ★ SQLite schema, constraints, triggers, views, queries
-│   ├── auth.js           Session handling & role-based access control
-│   ├── ui.js             Shared UI helpers (badges, toasts, modals)
-│   ├── donor.js          Donor page logic
-│   ├── find.js           Public search page logic
-│   └── admin.js          Admin page logic
-├── vendor/
-│   ├── sql-asm.js        SQLite engine (sql.js, runs 100% in the browser)
-│   └── chart.umd.min.js  Chart.js
-├── server/
-│   └── serve.ps1         Tiny PowerShell web server used by start-server.bat
-└── docs/
-    ├── schema.sql          Clean DDL for the report
-    └── normalization.md    Unnormalized → 1NF → 2NF → 3NF walkthrough
+```bash
+git clone https://github.com/ritamonisonowal2/lifelink.git
+cd lifelink
 ```
 
-## 🧰 Admin tools
+Then open `index.html` in your browser.
 
-- **⬇ Export backup** — downloads the live database as a real SQLite file.
-  Open it with the free *DB Browser for SQLite* to screenshot tables for your report.
-- **♻ Reset system** — wipes everything (including the admin account) and returns to the brand-new, empty platform.
+To serve the project over HTTP instead:
 
-## ⚠️ Notes
+- **Windows:** run `start-server.bat`, then open `http://127.0.0.1:8931`.
+- **macOS / Linux:** run `python3 -m http.server 8931` in the project folder, then open `http://127.0.0.1:8931`.
 
-- Data is stored in the browser's `localStorage` **per browser profile**. Clearing
-  site data resets the database. Use **Reset system data** (admin) to start over.
-- Passwords are stored as salted SHA-256 hashes (never plain text) — appropriate for
-  an academic project; a production system would use bcrypt/argon2 on a server.
-- The compatibility matrix is seeded medical reference data (WHO blood-group rules).
+### First use
 
----
+The database is created automatically and starts empty, apart from the blood-compatibility reference table.
 
-## 🎨 Look & feel (editorial layout)
+1. Open **Login** and choose **Set up the administrator account**.
+2. Create the administrator account. You are taken to the admin dashboard.
+3. Donors register from **Donate**. Seekers can search without an account.
 
-- `css/theme-editorial.css` — warm cream paper, serif headings, mono labels and dark pill buttons, loaded after `style.css` on every page.
-- Navigation tabs are drawn by `renderNavLinks()` in `js/ui.js` (Home · Match · Blood Stock · Requests · Analytics · Dashboard · Register), so they are identical on every page.
-- `index.html` — hero card, clickable feature cards, and live sections: Instant Blood Match, Blood Stock, Requests, Analytics.
+### Resetting data
 
----
-## 🆕 Version 6 changes
-- **Donor can edit profile** (✏️ Edit profile on the donor dashboard).
-- **Seekers can track and cancel a request** (Find Donor → "Track or cancel my request": request number + phone).
-- **Donations need admin approval**: Donation.status = pending/approved/rejected. Stock rises only when the admin approves (trigger `trg_stock_on_donation`).
-- **AuditLog table + 2 audit triggers** (`trg_audit_stock`, `trg_audit_request`) record every stock and request-status change; shown in the Admin dashboard.
-- Clearer wording on Find Donor (patient's blood group, meaning of rank / "Compatible").
+Data is stored in the browser's local storage, separately for each browser and each address (`file://` and `http://` are different). To clear everything, open `reset.html`.
+
+## Technologies
+
+| Layer | Technology |
+|---|---|
+| Structure | HTML5 |
+| Styling | CSS3 |
+| Logic | JavaScript (no framework) |
+| Database | SQLite via sql.js, with SQL for the schema, queries, triggers and views |
+| Charts | Chart.js |
+
+## Database design
+
+### Tables
+
+| Table | Purpose |
+|---|---|
+| `Users` | Login accounts (donor or admin) |
+| `Donor` | Donor profile, one-to-one with `Users` |
+| `Request` | Blood and organ requests |
+| `CompatibilityRule` | Which donor blood groups can give to which recipient groups |
+| `BloodStock` | Units per blood group |
+| `Donation` | Donations with a status of pending, approved or rejected |
+| `DonationMatch` | Links requests to matched donors (many-to-many) |
+| `AuditLog` | Record of stock and request-status changes |
+
+### Triggers
+
+- `trg_stock_on_donation` adds units to stock when a donation is approved.
+- `trg_stock_on_fulfilment` deducts units from stock when a blood request is fulfilled.
+- `trg_audit_stock` logs every stock change.
+- `trg_audit_request` logs every request status change.
+
+### Views
+
+- `vw_stock_status` labels each blood group as OK, LOW or OUT.
+- `vw_critical_requests` lists active critical requests.
+- `vw_donor_group_summary` counts donors per blood group.
+
+### Constraints
+
+Primary and foreign keys, `UNIQUE` emails, `NOT NULL` fields, and `CHECK` constraints on age (18 to 65), phone length, blood groups, organs, urgency, request status, donation status and non-negative stock.
+
+### Key query
+
+`searchDonors()` in `js/db.js` joins `Donor`, `Users` and `CompatibilityRule`, orders results by match quality, city and age, and uses `NOT EXISTS` to skip donors already linked to an open request.
+
+The full schema is in `docs/schema.sql`, and the normalization steps (1NF to 3NF) are in `docs/normalization.md`.
+
+## Project structure
+
+```
+index.html            Home page with live statistics
+find.html             Donor search, contact, request tracking
+register.html         Donor sign-up (and one-time admin setup)
+login.html            Login
+donor.html            Donor dashboard
+admin.html            Admin dashboard
+reset.html            Clears all data in the current browser
+start-server.bat      Optional local server (Windows)
+css/                  style.css, theme-editorial.css
+js/                   db.js, auth.js, ui.js, find.js, donor.js, admin.js
+vendor/               sql-asm.js (sql.js), chart.umd.min.js (Chart.js)
+server/               serve.ps1 used by start-server.bat
+docs/                 schema.sql, normalization.md
+```
+
+## Limitations
+
+- Data is stored per browser and is not shared between devices, because the project uses no server.
+- Passwords are hashed in the browser, which is suitable for a student project but not for production use.
+- Donors and hospitals are not independently verified.
+- This is an academic prototype and is not intended for real medical emergencies.
