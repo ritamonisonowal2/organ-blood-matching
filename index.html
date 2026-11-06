@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="LifeLink connects people who need blood or organs with compatible donors — ranked matching, live blood stock and real-time dashboards.">
+  <title>LifeLink — Organ & Blood Matching System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/theme-editorial.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩸</text></svg>">
+</head>
+<body>
+
+  <!-- ============ NAVBAR (tabs are rendered by js/ui.js) ============ -->
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <span class="drop">🩸</span>
+        <span>LifeLink<small>Organ &amp; Blood Matching</small></span>
+      </a>
+      <div class="nav-links"></div>
+      <div class="nav-right" id="nav-user"></div>
+    </div>
+  </nav>
+
+  <!-- ============ HERO CARD ============ -->
+  <header class="hero" id="home">
+    <div class="hero-card">
+      <div class="hero-grid">
+        <div>
+          <span class="hero-tag">Your life-saving matching network</span>
+          <h1>LifeLink: Every Drop Counts, Every <em>Organ</em> Matters</h1>
+          <p class="lead">
+            Need blood or an organ? Search compatible donors in seconds — no login, no forms.
+            Want to help? Become a donor and see who needs you.
+          </p>
+          <form class="quick-search" id="quick-search">
+            <label for="qs-group">I need</label>
+            <select id="qs-group" required>
+              <option value="">Blood group…</option>
+              <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+            </select>
+            <input type="text" id="qs-city" placeholder="City (optional)">
+            <button type="submit" class="cta-btn"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg> Find donors now</button>
+          </form>
+          <div class="cta-stack" style="margin-top:14px">
+            <a class="cta-btn alt" href="register.html">Become a donor <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a>
+          </div>
+        </div>
+
+        <div class="hero-art" aria-hidden="true">
+          <svg viewBox="0 0 400 400">
+            <circle cx="200" cy="200" r="178" fill="none" stroke="rgba(227,236,238,.08)"/>
+            <circle cx="200" cy="200" r="138" fill="none" stroke="rgba(227,236,238,.12)"/>
+            <circle class="ring" cx="200" cy="200" r="98" fill="none" stroke="rgba(227,236,238,.9)" stroke-width="1.5"/>
+            <polyline points="22,205 110,205 128,205 142,160 160,250 178,190 196,205 400,205"
+                      fill="none" stroke="rgba(255,75,107,.28)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+            <polyline class="pulse-line" points="22,205 110,205 128,205 142,160 160,250 178,190 196,205 262,205 280,150 296,262 312,205 378,205"
+                      fill="none" stroke="#c4402f" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+            <g class="drop-core">
+              <path d="M200 148C200 148 242 192 242 222a42 42 0 0 1-84 0C158 192 200 148 200 148Z" fill="#c4402f"/>
+              <path d="M178 224a22 22 0 0 0 20 22" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="4" stroke-linecap="round"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="stats-strip">
+        <div class="inner">
+          <div class="stat"><span class="stat-ico red">🩸</span><div><b id="stat-donors">–</b><span>Registered donors</span></div></div>
+          <div class="stat"><span class="stat-ico blue">🚑</span><div><b id="stat-hospitals">–</b><span>Open requests</span></div></div>
+          <div class="stat"><span class="stat-ico brown">📦</span><div><b id="stat-units">–</b><span>Units in stock</span></div></div>
+          <div class="stat"><span class="stat-ico green">✅</span><div><b id="stat-fulfilled">–</b><span>Requests fulfilled</span></div></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ FEATURES — every card is a link ============ -->
+  <section class="landing-section" id="features">
+    <span class="section-tag">Features</span>
+    <h2>Everything a blood &amp; organ network needs</h2>
+    <p class="sub">One platform connecting people in need with donors —
+       so no request waits and no blood sits idle. Tap any card to jump straight to it.</p>
+
+    <div class="feature-grid">
+      <a class="feature-card" href="register.html">
+        <div class="f-icon f-orange">📝</div>
+        <h3>Become a donor</h3>
+        <p>Sign up with just a name, email and password. Add your blood group and city inside — and see who needs you straight away.</p>
+        <span class="f-go">Register <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="feature-card" href="find.html">
+        <div class="f-icon f-green">🎯</div>
+        <h3>Instant donor search</h3>
+        <p>Pick a blood group — every compatible donor is ranked on the spot: exact group first, same city preferred. No login needed.</p>
+        <span class="f-go">Find a donor <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="feature-card" href="#requests">
+        <div class="f-icon f-blue">🚑</div>
+        <h3>Blood &amp; organ requests</h3>
+        <p>Anyone can post a request with group, units and urgency. Status moves pending → matched → fulfilled.</p>
+        <span class="f-go">See requests <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="feature-card" href="#stock">
+        <div class="f-icon f-yellow">📦</div>
+        <h3>Live blood stock</h3>
+        <p>Stock grows the moment a donation is approved and shrinks when a request is fulfilled — with low-stock warnings.</p>
+        <span class="f-go">View stock <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="feature-card" href="#analytics">
+        <div class="f-icon f-brown">📊</div>
+        <h3>Analytics dashboard</h3>
+        <p>Donors by blood group and request status — the whole network at a glance, drawn as live charts.</p>
+        <span class="f-go">Open analytics <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="feature-card" href="login.html">
+        <div class="f-icon f-red">🔐</div>
+        <h3>Donor &amp; admin dashboards</h3>
+        <p>Donors manage their profile and availability; the admin oversees requests, stock and analytics — hashed passwords, zero shared access.</p>
+        <span class="f-go">Log in <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ INSTANT BLOOD MATCH ============ -->
+  <section class="landing-section" id="match">
+    <span class="section-tag">Instant blood match</span>
+    <h2>Who can give to whom?</h2>
+    <p class="sub">Pick a blood group to see which groups it can receive from and donate to,
+       with live counts of available donors and units in stock.</p>
+
+    <div class="panel">
+      <div class="group-picker" id="group-picker"></div>
+      <div class="panel-grid">
+        <div>
+          <h3>Can receive from</h3>
+          <p class="hint">Compatible donor groups — exact match first.</p>
+          <div class="match-chips" id="recv-chips"></div>
+        </div>
+        <div>
+          <h3>Can donate to</h3>
+          <p class="hint">Recipient groups this blood group can help.</p>
+          <div class="match-chips" id="give-chips"></div>
+        </div>
+      </div>
+      <div class="organ-row">
+        <h4>🎯 Open requests <span id="help-group">this group</span> can help with — right now</h4>
+        <div id="help-box"></div>
+      </div>
+      <div class="organ-row">
+        <h4>Organ donors available right now</h4>
+        <div class="match-chips" id="organ-chips"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LIVE BLOOD STOCK ============ -->
+  <section class="landing-section" id="stock">
+    <span class="section-tag">Live blood stock</span>
+    <h2>Units in the network</h2>
+    <p class="sub">Updates the moment a donation is approved or a request is fulfilled.</p>
+    <div class="panel">
+      <div class="stock-chips" id="stock-chips">
+        <div class="stock-chip"><span class="chip-group">…</span><b class="chip-num">·</b><span class="chip-cap">loading</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ REQUESTS ============ -->
+  <section class="landing-section" id="requests">
+    <span class="section-tag">Blood &amp; organ requests</span>
+    <h2>From request to fulfilled</h2>
+    <p class="sub">Anyone posts a request with urgency; compatible donors are ranked and the status is tracked end to end.</p>
+    <div class="panel">
+      <div class="status-flow">
+        <div class="status-card pending"><span>Pending</span><b id="req-pending">–</b><p>Waiting for a donor match</p></div>
+        <div class="status-card matched"><span>Matched</span><b id="req-matched">–</b><p>Donors contacted by the seeker</p></div>
+        <div class="status-card fulfilled"><span>Fulfilled</span><b id="req-fulfilled">–</b><p>Delivered — stock updated</p></div>
+      </div>
+      <div class="cta-stack" style="padding-bottom:0; flex-direction:row; flex-wrap:wrap;">
+        <a class="cta-btn" href="find.html">Need blood? Search / post a request <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a>
+        <a class="cta-btn alt" href="register.html">Donor: respond to requests <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ANALYTICS ============ -->
+  <section class="landing-section" id="analytics">
+    <span class="section-tag">Analytics</span>
+    <h2>The whole network at a glance</h2>
+    <p class="sub">Live charts drawn straight from the database.</p>
+    <div class="panel-grid">
+      <div class="panel">
+        <h3>Donors by blood group</h3>
+        <p class="hint">Registered vs. currently available.</p>
+        <div class="chart-box"><canvas id="chart-donors"></canvas></div>
+        <div class="empty-note" id="donors-empty" hidden>No donors registered yet.</div>
+      </div>
+      <div class="panel">
+        <h3>Requests by status</h3>
+        <p class="hint">Pending, matched and fulfilled.</p>
+        <div class="chart-box"><canvas id="chart-status"></canvas></div>
+        <div class="empty-note" id="status-empty" hidden>No requests raised yet.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HOW IT WORKS ============ -->
+  <section class="landing-section" id="how">
+    <h2>How it works</h2>
+    <p class="sub">From registration to transfusion in three steps.</p>
+    <div class="steps">
+      <div class="step">
+        <h3>Search — no login</h3>
+        <p>Choose the blood group (or organ) and city. Compatible donors are ranked instantly,
+           exact group first and nearest city next.</p>
+      </div>
+      <div class="step">
+        <h3>Contact the donors</h3>
+        <p>Leave your name and phone, get the donors' numbers and call them. If nobody is available,
+           post an open request — donors see it on their dashboard.</p>
+      </div>
+      <div class="step">
+        <h3>Fulfil &amp; track</h3>
+        <p>The admin marks the request fulfilled and blood stock updates automatically through a database trigger.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <span class="f-brand">🩸 <span><b>LifeLink</b> — Organ &amp; Blood Matching System</span></span>
+      <span>Connecting people in need with donors when every minute counts · <a href="reset.html" style="color:inherit; text-decoration:underline">Reset data</a></span>
+    </div>
+  </footer>
+
+  <!-- ============ SCRIPTS ============ -->
+  <script src="vendor/sql-asm.js"></script>
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (async function () {
+      document.getElementById('quick-search').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const g = document.getElementById('qs-group').value, c = document.getElementById('qs-city').value.trim();
+        if (!g) { document.getElementById('qs-group').focus(); return; }
+        location.href = 'find.html?group=' + encodeURIComponent(g) + (c ? '&city=' + encodeURIComponent(c) : '');
+      });
+
+      try {
+        await initDatabase();
+        mountUserChip();
+
+        /* ---- live stat pills ---- */
+        const s = dashboardStats();
+        el('stat-donors').textContent    = s.totalDonors;
+        el('stat-hospitals').textContent = s.openRequests;
+        el('stat-units').textContent     = s.totalUnits;
+        el('stat-fulfilled').textContent = s.fulfilledRequests;
+
+        /* ---- live stock chips ---- */
+        const stock = getStock();
+        el('stock-chips').innerHTML = stock.map(r => `
+          <div class="stock-chip ${r.stock_status !== 'OK' ? 'warn' : ''}">
+            <span class="chip-group">${esc(r.blood_group)}</span>
+            <b class="chip-num">${r.units}</b>
+            <span class="chip-cap">${r.stock_status === 'OK' ? 'units available'
+                                   : r.stock_status === 'LOW' ? 'low stock'
+                                   : 'out of stock'}</span>
+          </div>`).join('');
+
+        /* ---- request status cards ---- */
+        const st = {}; requestStatusCounts().forEach(r => st[r.status] = r.cnt);
+        el('req-pending').textContent   = st.pending   || 0;
+        el('req-matched').textContent   = st.matched   || 0;
+        el('req-fulfilled').textContent = st.fulfilled || 0;
+
+        /* ---- instant blood match ---- */
+        const rules   = listCompatibilityRules();
+        const summary = {}; donorGroupSummary().forEach(r => summary[r.blood_group] = r);
+        const units   = {}; stock.forEach(r => units[r.blood_group] = r.units);
+        const groups  = stock.map(r => r.blood_group);
+        let picked = groups.includes('O-') ? 'O-' : groups[0];
+
+        const chip = (g, extra, exact) => {
+          const donors = (summary[g] && summary[g].available_donors) || 0;
+          return `<span class="match-chip ${exact ? 'exact' : ''}">
+                    <b>${esc(g)}</b>
+                    <small>${extra(g, donors)}</small>
+                  </span>`;
+        };
+        function drawMatch() {
+          el('group-picker').innerHTML = groups.map(g =>
+            `<button type="button" class="${g === picked ? 'on' : ''}" data-g="${esc(g)}">${esc(g)}</button>`).join('');
+          el('group-picker').querySelectorAll('button').forEach(b =>
+            b.onclick = () => { picked = b.dataset.g; drawMatch(); drawHelp(); });
+
+          const recv = rules.filter(r => r.recipient_group === picked).sort((a, b) => a.priority - b.priority);
+          el('recv-chips').innerHTML = recv.map(r =>
+            chip(r.donor_group, (g, d) => `${d} donor${d === 1 ? '' : 's'} · ${units[g] || 0} units`, r.donor_group === picked)).join('')
+            || '<span class="empty-note">No rules found.</span>';
+
+          const give = rules.filter(r => r.donor_group === picked).sort((a, b) => a.priority - b.priority);
+          el('give-chips').innerHTML = give.map(r =>
+            chip(r.recipient_group, () => r.recipient_group === picked ? 'same group' : 'compatible', r.recipient_group === picked)).join('');
+        }
+        drawMatch();
+        function drawHelp() {
+          const rows = suggestRequests(picked, 'blood', '').slice(0, 4);
+          el('help-group').textContent = picked;
+          el('help-box').innerHTML = rows.length ? `
+            <div class="table-wrap"><table class="table">
+              <thead><tr><th>Needed at</th><th>Group needed</th><th>Units</th><th>Urgency</th><th>City</th></tr></thead>
+              <tbody>${rows.map(r => `<tr class="${r.urgency === 'critical' ? 'row-critical' : ''}">
+                <td><b>${esc(reqPlace(r))}</b></td>
+                <td><span class="badge badge-group">${esc(r.blood_group)}</span></td>
+                <td class="num">${r.units}</td><td>${urgencyBadge(r.urgency)}</td><td>${esc(r.city)}</td></tr>`).join('')}
+              </tbody></table></div>
+            <p class="hint" style="margin-top:12px"><a href="register.html">Sign up in 20 seconds</a> to respond — you only add your details after.</p>`
+            : '<span class="empty-note">No open blood requests for this group right now.</span>';
+        }
+        drawHelp();
+
+        const ORGANS = ['kidney', 'liver', 'heart', 'lung', 'pancreas', 'cornea'];
+        const organCount = {};
+        all("SELECT organ, COUNT(*) AS c FROM Donor WHERE available = 1 AND organ <> 'blood' GROUP BY organ")
+          .forEach(r => organCount[r.organ] = r.c);
+        el('organ-chips').innerHTML = ORGANS.map(o => `
+          <span class="match-chip ${organCount[o] ? '' : 'none'}">
+            <b>${organCount[o] || 0}</b><small>${o}</small>
+          </span>`).join('');
+
+        /* ---- charts ---- */
+        const txt = '#5f5247', grid = 'rgba(35,28,23,.08)';
+        Chart.defaults.color = txt;
+        Chart.defaults.font.family = 'ui-monospace, Consolas, monospace';
+
+        if (s.totalDonors > 0) {
+          new Chart(el('chart-donors'), {
+            type: 'bar',
+            data: { labels: groups,
+              datasets: [
+                { label: 'Registered', data: groups.map(g => (summary[g] ? summary[g].total_donors : 0)),     backgroundColor: '#d8c9b0', borderRadius: 6 },
+                { label: 'Available',  data: groups.map(g => (summary[g] ? summary[g].available_donors : 0)), backgroundColor: '#c4402f',  borderRadius: 6 } ] },
+            options: { maintainAspectRatio: false,
+              scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: grid } } },
+              plugins: { legend: { labels: { boxWidth: 12 } } } }
+          });
+        } else {
+          el('chart-donors').parentElement.hidden = true; el('donors-empty').hidden = false;
+        }
+
+        const total = (st.pending || 0) + (st.matched || 0) + (st.fulfilled || 0) + (st.cancelled || 0);
+        if (total > 0) {
+          new Chart(el('chart-status'), {
+            type: 'doughnut',
+            data: { labels: ['Pending', 'Matched', 'Fulfilled', 'Cancelled'],
+              datasets: [{ data: [st.pending || 0, st.matched || 0, st.fulfilled || 0, st.cancelled || 0],
+                backgroundColor: ['#d9a93a', '#4a6f93', '#5b7f4a', '#a99b8b'], borderColor: '#fbf7ef', borderWidth: 3 }] },
+            options: { maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
+          });
+        } else {
+          el('chart-status').parentElement.hidden = true; el('status-empty').hidden = false;
+        }
+      } catch (err) {
+        console.error(err);
+        el('stock-chips').innerHTML =
+          '<div class="stock-chip"><span class="chip-cap">Could not load live data</span></div>';
+      }
+    })();
+  </script>
+</body>
+</html>

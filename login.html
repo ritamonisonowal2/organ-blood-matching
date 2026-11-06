@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Login — LifeLink</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/theme-editorial.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩸</text></svg>">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <span class="drop">🩸</span>
+        <span>LifeLink<small>Organ &amp; Blood Matching</small></span>
+      </a>
+      <div class="nav-right" id="nav-user"></div>
+    </div>
+  </nav>
+
+  <main class="auth-wrap">
+    <div class="blobs">
+      <span class="blob blob-pink"></span>
+      <span class="blob blob-green"></span>
+      <span class="blob blob-yellow"></span>
+    </div>
+
+    <div class="auth-card">
+      <div class="auth-logo">🩸</div>
+      <h1>Welcome back</h1>
+      <p class="auth-sub">Log in to your donor or admin dashboard. Looking for a donor? <a href="find.html">No login needed — search here</a>.</p>
+
+      <div class="form-error" id="login-error"></div>
+
+      <form id="login-form" novalidate>
+        <div class="field">
+          <label for="email">Email address</label>
+          <input type="email" id="email" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="pw-field">
+            <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
+            <button type="button" class="pw-toggle" id="pw-toggle">Show</button>
+          </div>
+        </div>
+        <div class="remember-row">
+          <label><input type="checkbox" id="remember" checked> Keep me signed in</label>
+          <a href="#" id="forgot">Forgot password?</a>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="login-btn">Log in</button>
+      </form>
+
+      <div class="auth-foot">
+        New to LifeLink? <a href="register.html">Create your account</a>
+        <span id="setup-link" style="display:none"><br>First time running this system? <a href="register.html?setup=admin">Set up the administrator account</a></span>
+      </div>
+    </div>
+  </main>
+
+  <script src="vendor/sql-asm.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (async function () {
+      await initDatabase();
+      mountUserChip();
+      if (!adminExists()) el('setup-link').style.display = '';
+
+      /* already logged in? go straight to the right dashboard */
+      const s = getSession();
+      if (s && sessionUserExists(s)) location.replace(homeForRole(s.role));
+      else if (s) clearSession();
+
+      /* show / hide password */
+      el('pw-toggle').addEventListener('click', () => {
+        const input = el('password');
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        el('pw-toggle').textContent = show ? 'Hide' : 'Show';
+      });
+
+      /* forgot password → point to the admin (closed system, no email flow) */
+      el('forgot').addEventListener('click', (e) => {
+        e.preventDefault();
+        toast('Password resets are handled by your system administrator.', 'info');
+      });
+
+      el('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errBox = el('login-error');
+        errBox.classList.remove('show');
+
+        const email    = el('email').value.trim();
+        const password = el('password').value;
+
+        if (!email || !password) {
+          errBox.textContent = 'Please enter both email and password.';
+          errBox.classList.add('show');
+          return;
+        }
+
+        const btn = el('login-btn');
+        btn.disabled = true;
+        btn.textContent = 'Checking…';
+
+        try {
+          const res = await loginUser(email, password);
+          if (!res.ok) {
+            errBox.textContent = res.error;
+            errBox.classList.add('show');
+            return;
+          }
+          /* "Keep me signed in": localStorage survives browser restarts,
+             sessionStorage only lasts for this tab session. */
+          setSession(res.user, el('remember').checked);
+          toast(`Welcome back, ${esc(res.user.full_name)}!`, 'success');
+          location.href = homeForRole(res.user.role);
+        } catch (err) {
+          console.error(err);
+          errBox.textContent = 'Something went wrong. Please try again.';
+          errBox.classList.add('show');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Log in';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

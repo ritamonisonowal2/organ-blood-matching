@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Donor Dashboard — LifeLink</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/theme-editorial.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩸</text></svg>">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <span class="drop">🩸</span>
+        <span>LifeLink<small>Organ &amp; Blood Matching</small></span>
+      </a>
+      <div class="nav-right" id="nav-user"></div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="page-head">
+      <div>
+        <h1><span id="greet-word">Good day</span>, <span id="greet-name">donor</span></h1>
+        <p>Requests that need your blood group appear here the moment someone posts them.</p>
+      </div>
+      <button class="btn btn-primary" id="btn-record">＋ Record a donation</button>
+    </div>
+
+    <!-- ===== first-time donors: suggestions first, details second ===== -->
+    <div class="grid grid-main-side" id="onboard" style="display:none">
+      <div class="card">
+        <div class="card-head">
+          <h2>🎯 Who needs you right now</h2>
+          <span class="count-pill" id="sug-count"></span>
+        </div>
+        <div class="table-wrap" id="sug-box"></div>
+      </div>
+
+      <div class="card card-pad">
+        <h2 style="font-size:16px; color:var(--brown); margin-bottom:6px;">Tell us a little about you</h2>
+        <p class="hint" style="margin-bottom:14px">Pick your blood group — suggestions on the left update instantly.
+          Save to appear in donor searches.</p>
+        <div class="form-error" id="ob-error"></div>
+        <form id="ob-form" novalidate>
+          <div class="field">
+            <label>Blood group *</label>
+            <div class="group-picker" id="ob-groups" style="margin:6px 0 4px"></div>
+          </div>
+          <div class="field">
+            <label for="ob-organ">I want to donate</label>
+            <select id="ob-organ">
+              <option value="blood" selected>Whole blood</option>
+              <option value="kidney">Kidney</option><option value="liver">Liver</option>
+              <option value="heart">Heart</option><option value="lung">Lung</option>
+              <option value="pancreas">Pancreas</option><option value="cornea">Cornea (eyes)</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="ob-city">City *</label>
+              <input type="text" id="ob-city" list="city-list" placeholder="Start typing…">
+              <datalist id="city-list">
+                <option>Guwahati</option><option>Dispur</option><option>Jorhat</option>
+                <option>Dibrugarh</option><option>Silchar</option><option>Tezpur</option>
+                <option>Bengaluru</option><option>Mumbai</option><option>Delhi</option>
+                <option>Chennai</option><option>Hyderabad</option><option>Kolkata</option>
+              </datalist>
+            </div>
+            <div class="field">
+              <label for="ob-age">Age (18–65) *</label>
+              <input type="number" id="ob-age" min="18" max="65" placeholder="18–65">
+            </div>
+          </div>
+          <div class="field">
+            <label for="ob-phone">Phone (optional)</label>
+            <input type="tel" id="ob-phone" maxlength="10" inputmode="numeric" placeholder="10 digits — shown only to people who contact you">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Save &amp; start matching</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="loading" id="loading"><div class="spinner"></div>Opening your database…</div>
+
+    <div class="grid grid-main-side" id="content" style="display:none">
+
+      <!-- ===== main column ===== -->
+      <div style="display:flex; flex-direction:column; gap:18px;">
+
+        <div class="card">
+          <div class="card-head">
+            <h2>🎯 Open requests that need you</h2>
+            <div class="chip-row">
+              <span class="count-pill" id="req-count"></span>
+              <button class="btn btn-ghost btn-sm" id="btn-refresh">↻ Refresh</button>
+            </div>
+          </div>
+          <div class="table-wrap" id="requests-box"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>🩸 My donation history</h2>
+            <span class="sub" id="donation-count"></span>
+          </div>
+          <div class="table-wrap" id="donations-box"></div>
+        </div>
+
+      </div>
+
+      <!-- ===== side column ===== -->
+      <div style="display:flex; flex-direction:column; gap:18px;">
+
+        <div class="card card-pad" id="profile-box"></div>
+
+        <div id="tip-box"></div>
+
+        <div class="card card-pad" style="border-style:dashed">
+          <h3 style="font-size:15px; margin-bottom:4px">Delete my account</h3>
+          <p style="font-size:13px; color:var(--muted); margin-bottom:12px">Permanently removes your donor profile, donation history and login.</p>
+          <button class="btn btn-danger btn-sm" id="btn-delete-account">Delete my account</button>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== record donation modal ===== -->
+  <div class="modal-backdrop" id="modal-donate">
+    <div class="modal" style="max-width:460px">
+      <div class="modal-head">
+        <h3>🩸 Record a donation</h3>
+        <button class="modal-close" onclick="closeModal('modal-donate')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">Your donation is sent to the admin for approval. When approved, the database <b>TRIGGER</b> adds it to the blood stock.</div>
+        <div id="donate-summary"></div>
+        <div class="field">
+          <label for="donate-units">Units donated</label>
+          <select id="donate-units">
+            <option value="1" selected>1 unit (~450 ml)</option>
+            <option value="2">2 units</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" onclick="closeModal('modal-donate')">Cancel</button>
+        <button class="btn btn-primary" id="donate-save">Save donation</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modal-edit">
+    <div class="modal" style="max-width:460px">
+      <div class="modal-head"><h3>✏️ Edit profile</h3><button class="modal-close" onclick="closeModal('modal-edit')">✕</button></div>
+      <div class="modal-body">
+        <div class="form-error" id="ep-error"></div>
+        <div class="field"><label for="ep-group">Blood group</label><select id="ep-group"></select></div>
+        <div class="field"><label for="ep-organ">I want to donate</label>
+          <select id="ep-organ"><option value="blood">Whole blood</option><option value="kidney">Kidney</option><option value="liver">Liver</option>
+            <option value="heart">Heart</option><option value="lung">Lung</option><option value="pancreas">Pancreas</option><option value="cornea">Cornea (eyes)</option></select></div>
+        <div class="field-row">
+          <div class="field"><label for="ep-city">City</label><input type="text" id="ep-city"></div>
+          <div class="field"><label for="ep-age">Age (18–65)</label><input type="number" id="ep-age"></div>
+        </div>
+        <div class="field"><label for="ep-phone">Phone (10 digits)</label><input type="tel" id="ep-phone" maxlength="10" inputmode="numeric"></div>
+      </div>
+      <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('modal-edit')">Cancel</button><button class="btn btn-primary" id="ep-save">Save changes</button></div>
+    </div>
+  </div>
+
+  <script src="vendor/sql-asm.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/donor.js"></script>
+</body>
+</html>

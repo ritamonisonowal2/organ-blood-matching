@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Register — LifeLink</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/theme-editorial.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩸</text></svg>">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <span class="drop">🩸</span>
+        <span>LifeLink<small>Organ &amp; Blood Matching</small></span>
+      </a>
+      <div class="nav-right" id="nav-user"></div>
+    </div>
+  </nav>
+
+  <main class="auth-wrap">
+    <div class="blobs">
+      <span class="blob blob-pink"></span>
+      <span class="blob blob-green"></span>
+      <span class="blob blob-yellow"></span>
+    </div>
+
+    <div class="auth-card">
+      <div class="auth-logo">🩸</div>
+      <h1>Become a donor</h1>
+      <p class="auth-sub">Takes 20 seconds. Just the basics now — you'll add your blood group and city
+         after signing in, and see who needs you straight away. <b>Looking for a donor?</b> <a href="find.html">No account needed — search here</a>.</p>
+
+      <!-- role picker: only shown for the one-time admin setup -->
+      <div class="segment" id="role-segment" style="display:none">
+        <button type="button" data-role="donor" class="active">🩸 Donor</button>
+        <button type="button" data-role="admin" id="admin-tab">🛡️ Admin setup</button>
+      </div>
+      <div class="alert alert-info" id="admin-note" style="display:none; margin-bottom:14px">
+        <span>🛡️ <b>First-time setup.</b> This creates the platform's one administrator account.
+        This option disappears once an administrator exists.</span>
+      </div>
+
+      <div class="form-error" id="reg-error"></div>
+
+      <form id="reg-form" novalidate>
+        <div class="field">
+          <label for="full-name" id="name-label">Your name</label>
+          <input type="text" id="full-name" placeholder="Full name" autocomplete="name" required>
+        </div>
+        <div class="field">
+          <label for="email">Email address</label>
+          <input type="email" id="email" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="pw-field">
+            <input type="password" id="password" placeholder="At least 6 characters" autocomplete="new-password" required>
+            <button type="button" class="pw-toggle" id="pw-toggle">Show</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="reg-btn">Sign up</button>
+      </form>
+
+      <div class="auth-foot">
+        Already registered? <a href="login.html">Log in</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="vendor/sql-asm.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (async function () {
+      await initDatabase();
+      mountUserChip();
+
+      const s = getSession();
+      if (s && sessionUserExists(s)) location.replace(homeForRole(s.role));
+      else if (s) clearSession();
+
+      let role = 'donor';
+      const noAdminYet = !adminExists();
+      if (noAdminYet) el('role-segment').style.display = '';
+
+      function selectRole(r) {
+        role = r;
+        document.querySelectorAll('#role-segment button').forEach(b =>
+          b.classList.toggle('active', b.dataset.role === r));
+        el('admin-note').style.display = r === 'admin' ? '' : 'none';
+        el('reg-btn').textContent = r === 'admin' ? 'Create administrator account' : 'Sign up';
+      }
+      if (noAdminYet && new URLSearchParams(location.search).get('setup') === 'admin') selectRole('admin');
+
+      el('role-segment').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-role]');
+        if (btn) selectRole(btn.dataset.role);
+      });
+
+      el('pw-toggle').addEventListener('click', () => {
+        const input = el('password');
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        el('pw-toggle').textContent = show ? 'Hide' : 'Show';
+      });
+
+      const errBox = el('reg-error');
+      function showError(msg) { errBox.textContent = msg; errBox.classList.add('show'); }
+      function hideError()    { errBox.classList.remove('show'); }
+      const v = (id) => el(id).value.trim();
+
+      el('reg-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideError();
+
+        if (v('full-name').length < 2)                      return showError('Please enter your name.');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('email'))) return showError('Please enter a valid email address.');
+        if (el('password').value.length < 6)                return showError('Password must be at least 6 characters long.');
+
+        const form = { role, fullName: v('full-name'), email: v('email'), password: el('password').value };
+
+        const btn = el('reg-btn');
+        btn.disabled = true;
+        btn.textContent = 'Creating account…';
+        try {
+          const res = await registerUser(form);
+          if (!res.ok) { showError(res.error); return; }
+
+          /* auto-login → straight into the dashboard, where the details are collected */
+          const login = await loginUser(form.email, form.password);
+          if (login.ok) setSession(login.user);
+          location.href = login.ok ? homeForRole(login.user.role) : 'login.html';
+        } catch (err) {
+          console.error(err);
+          showError('Could not create the account: ' + err.message);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = role === 'admin' ? 'Create administrator account' : 'Sign up';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

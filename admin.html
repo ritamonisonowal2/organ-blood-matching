@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Admin Dashboard — LifeLink</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/theme-editorial.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩸</text></svg>">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <span class="drop">🩸</span>
+        <span>LifeLink<small>Organ &amp; Blood Matching</small></span>
+      </a>
+      <div class="nav-right" id="nav-user"></div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="page-head">
+      <div>
+        <h1>Admin Dashboard</h1>
+        <p>System-wide view of donors, public requests and blood stock.</p>
+      </div>
+      <div class="chip-row">
+        <button class="btn btn-outline btn-sm" id="btn-export">⬇ Export backup</button>
+        <button class="btn btn-danger btn-sm" id="btn-reset">♻ Reset system</button>
+      </div>
+    </div>
+
+    <div class="loading" id="loading"><div class="spinner"></div>Opening your database…</div>
+
+    <div id="content" style="display:none">
+
+      <!-- ===== stat cards ===== -->
+      <div class="grid grid-4" id="stat-grid"></div>
+
+      <div id="alert-slot" style="margin-top:18px"></div>
+
+      <!-- ===== charts ===== -->
+      <h2 class="section-title">Analytics — donors · requests · stock</h2>
+      <div class="grid grid-3">
+        <div class="card card-pad">
+          <h2 style="font-size:15.5px; color:var(--brown); margin-bottom:12px;">🩸 Donors by blood group</h2>
+          <div class="chart-box"><canvas id="chart-donors"></canvas></div>
+        </div>
+        <div class="card card-pad">
+          <h2 style="font-size:15.5px; color:var(--brown); margin-bottom:12px;">🚑 Requests by status</h2>
+          <div class="chart-box"><canvas id="chart-status"></canvas></div>
+        </div>
+        <div class="card card-pad">
+          <h2 style="font-size:15.5px; color:var(--brown); margin-bottom:12px;">📦 Blood stock (units)</h2>
+          <div class="chart-box"><canvas id="chart-stock"></canvas></div>
+        </div>
+      </div>
+
+      <!-- ===== critical requests (VIEW) ===== -->
+      <h2 class="section-title">🔴 Active critical requests — waiting for donors</h2>
+      <div class="card">
+        <div class="table-wrap" id="critical-box"></div>
+      </div>
+
+      <!-- ===== all requests ===== -->
+      <h2 class="section-title">🚑 All requests</h2>
+      <div class="card">
+        <div class="table-wrap" id="requests-box"></div>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:26px; grid-template-columns:1fr">
+        <!-- donors -->
+        <div class="card">
+          <div class="card-head"><h2>🧑‍🤝‍🧑 Registered donors</h2><span class="sub" id="donor-count"></span></div>
+          <div class="table-wrap" id="donors-box" style="max-height:430px; overflow-y:auto"></div>
+        </div>
+        <!-- users -->
+        <div class="card">
+          <div class="card-head"><h2>👤 All user accounts</h2><span class="sub" id="user-count"></span></div>
+          <div class="table-wrap" id="users-box" style="max-height:430px; overflow-y:auto"></div>
+        </div>
+      </div>
+
+      <h2 class="section-title">💉 Donations waiting for approval</h2>
+      <div class="card"><div class="table-wrap" id="pending-box"></div></div>
+
+      <h2 class="section-title">🧾 Audit log — latest changes (written by triggers)</h2>
+      <div class="card"><div class="table-wrap" id="audit-box"></div></div>
+
+      <!-- ===== compatibility matrix ===== -->
+      <h2 class="section-title">🧬 Blood compatibility matrix — who can donate to whom</h2>
+      <div class="card">
+        <div class="table-wrap" id="compat-box"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <span><b>🩸 LifeLink</b> — Organ &amp; Blood Matching System</span>
+      <span>© 2026 LifeLink · All rights reserved</span>
+    </div>
+  </footer>
+
+  <script src="vendor/sql-asm.js"></script>
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

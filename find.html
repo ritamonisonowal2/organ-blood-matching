@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Find a donor — LifeLink</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/theme-editorial.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩸</text></svg>">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <span class="drop">🩸</span>
+        <span>LifeLink<small>Organ &amp; Blood Matching</small></span>
+      </a>
+      <div class="nav-links"></div>
+      <div class="nav-right" id="nav-user"></div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="page-head">
+      <div>
+        <h1>Find a donor</h1>
+        <p>No account needed. Choose the blood group — compatible donors appear instantly, best match first.</p>
+      </div>
+    </div>
+
+    <div class="loading" id="loading"><div class="spinner"></div>Opening your database…</div>
+
+    <div id="content" style="display:none; flex-direction:column; gap:18px;">
+
+      <!-- ===== search ===== -->
+      <div class="card card-pad">
+        <div class="segment" id="type-segment" style="margin-bottom:16px; max-width:340px">
+          <button type="button" data-type="blood" class="active">🩸 Blood</button>
+          <button type="button" data-type="organ">🫀 Organ</button>
+        </div>
+
+        <div class="field">
+          <label>Blood group of the PATIENT who needs blood (not the donor's group)</label>
+          <div class="group-picker" id="f-groups" style="margin:6px 0 4px"></div>
+        </div>
+
+        <div class="field-row">
+          <div class="field" id="f-organ-wrap" style="display:none">
+            <label for="f-organ">Organ needed</label>
+            <select id="f-organ">
+              <option value="kidney">Kidney</option><option value="liver">Liver</option>
+              <option value="heart">Heart</option><option value="lung">Lung</option>
+              <option value="pancreas">Pancreas</option><option value="cornea">Cornea</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-city">City (optional — nearest donors first)</label>
+            <input type="text" id="f-city" list="city-list" placeholder="City">
+            <datalist id="city-list">
+              <option>Guwahati</option><option>Dispur</option><option>Jorhat</option>
+              <option>Dibrugarh</option><option>Silchar</option><option>Tezpur</option>
+              <option>Bengaluru</option><option>Mumbai</option><option>Delhi</option>
+              <option>Chennai</option><option>Hyderabad</option><option>Kolkata</option>
+            </datalist>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== results ===== -->
+      <div class="card">
+        <div class="card-head">
+          <h2 id="res-title">🎯 Donors</h2>
+          <div class="chip-row">
+            <span class="count-pill" id="res-count"></span>
+            <button class="btn btn-primary btn-sm" id="btn-contact" style="display:none">📞 Get contact numbers</button>
+          </div>
+        </div>
+        <p class="hint" style="margin:0 18px 10px; font-size:12.5px; color:var(--muted)"><b>#1 is the best match:</b> same blood group first, then other compatible groups, then donors in your city. “Compatible (O-)” means that donor's group can safely give to the patient.</p>
+        <div class="table-wrap" id="res-box"></div>
+      </div>
+
+      <div class="alert alert-info" id="post-hint" style="display:none">
+        <span>Can't find the right donor? <button type="button" class="btn btn-primary btn-sm" id="btn-post">📣 Post an open request</button> —
+        every compatible registered donor will see it on their dashboard.</span>
+      </div>
+
+      <div class="card card-pad">
+        <h2 style="font-size:16px; margin-bottom:6px">🔎 Track or cancel my request</h2>
+        <p class="hint" style="margin-bottom:12px">Enter the request number you were given and the phone number you used.</p>
+        <div class="field-row">
+          <div class="field"><label for="t-id">Request number</label><input type="number" id="t-id" min="1" placeholder="e.g. 1"></div>
+          <div class="field"><label for="t-phone">Your phone</label><input type="tel" id="t-phone" maxlength="10" inputmode="numeric" placeholder="10 digits"></div>
+        </div>
+        <button class="btn btn-outline btn-sm" id="t-go">Check status</button>
+        <div id="t-out" style="margin-top:14px"></div>
+      </div>
+
+      <!-- ===== live open requests (others who need help) ===== -->
+      <div class="card">
+        <div class="card-head"><h2>🚑 Open requests right now</h2>
+          <span class="sub"><a href="register.html">Become a donor</a> to respond</span></div>
+        <div class="table-wrap" id="open-box"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== contact / request modal ===== -->
+  <div class="modal-backdrop" id="modal-contact">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-head">
+        <h3 id="mc-title">📞 Contact donors</h3>
+        <button class="modal-close" onclick="closeModal('modal-contact')">✕</button>
+      </div>
+
+      <div id="mc-form-wrap">
+        <div class="modal-body">
+          <div class="alert alert-info" id="mc-summary" style="margin-bottom:14px"></div>
+          <div class="form-error" id="mc-error"></div>
+          <div class="field-row">
+            <div class="field">
+              <label for="mc-name">Your name *</label>
+              <input type="text" id="mc-name" placeholder="Full name" autocomplete="name">
+            </div>
+            <div class="field">
+              <label for="mc-phone">Your phone (10 digits) *</label>
+              <input type="tel" id="mc-phone" maxlength="10" inputmode="numeric" placeholder="10-digit mobile number" autocomplete="tel">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="mc-hospital">Hospital / place (optional)</label>
+              <input type="text" id="mc-hospital" placeholder="Hospital or clinic name">
+            </div>
+            <div class="field">
+              <label for="mc-city">City *</label>
+              <input type="text" id="mc-city" list="city-list" placeholder="City">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="mc-units">Units / quantity *</label>
+              <input type="number" id="mc-units" min="1" max="20" value="1">
+            </div>
+            <div class="field">
+              <label for="mc-urgency">Urgency *</label>
+              <select id="mc-urgency">
+                <option value="normal">🟢 Normal</option>
+                <option value="urgent" selected>🟠 Urgent</option>
+                <option value="critical">🔴 Critical</option>
+              </select>
+            </div>
+          </div>
+          <p class="hint" style="font-size:12.5px; color:var(--muted)">Your contact details are shared only with the donors you choose, so they can call you back.</p>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" onclick="closeModal('modal-contact')">Cancel</button>
+          <button class="btn btn-primary" id="mc-submit">Show contact numbers</button>
+        </div>
+      </div>
+
+      <div id="mc-done-wrap" style="display:none">
+        <div class="modal-body" id="mc-done"></div>
+        <div class="modal-foot">
+          <button class="btn btn-primary" onclick="closeModal('modal-contact')">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendor/sql-asm.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/find.js"></script>
+</body>
+</html>
