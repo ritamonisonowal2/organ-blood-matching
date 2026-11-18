@@ -16,7 +16,7 @@ function esc(v) {
 function fmtDateTime(s) {
   if (!s) return '—';
   const d = new Date(String(s).replace(' ', 'T'));
-  if (isNaN(d)) return s;
+  if (isNaN(d)) return '—';
   return d.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric',
                                      hour: '2-digit', minute: '2-digit' });
 }
@@ -25,7 +25,7 @@ function fmtDateTime(s) {
 function fmtDate(s) {
   if (!s) return '—';
   const d = new Date(String(s).replace(' ', 'T'));
-  if (isNaN(d)) return s;
+  if (isNaN(d)) return '—';
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
@@ -108,8 +108,7 @@ function emptyState(icon, title, hint) {
  */
 async function bootPage(requiredRole) {
   await initDatabase();
-  let session = getSession();
-  if (session && !sessionUserExists(session)) { clearSession(); session = null; }   // stale after a reset
+  const session = getSession();
   if (!session) { location.replace('login.html'); return null; }
   if (requiredRole && session.role !== requiredRole) {
     location.replace(homeForRole(session.role));
@@ -133,7 +132,8 @@ function mountUserChip() {
   const roleIcon = s.role === 'admin' ? '🛡️' : '🩸';
   slot.innerHTML = `
     <span class="nav-user-chip">${roleIcon} ${esc(s.full_name)}</span>
-    <button class="btn btn-ghost btn-sm" onclick="doLogout()">Logout</button>`;
+    <button class="btn btn-ghost btn-sm" type="button">Logout</button>`;
+  slot.querySelector('button').addEventListener('click', doLogout);
 }
 
 
@@ -198,3 +198,9 @@ function renderNavLinks() {
     window.addEventListener('hashchange', renderNavLinks);
   }
 }
+
+
+window.addEventListener('unhandledrejection', event => {
+  event.preventDefault();
+  toast(esc(event.reason?.message || 'LifeLink is temporarily unavailable.'), 'error');
+});

@@ -1,11 +1,12 @@
 /* ============================================================
    find.js — PUBLIC donor search (no login needed).
    Results update live as the person picks a group; contacting
-   donors creates a Request and reveals the donors' phone numbers.
+   donors creates a request they can accept from their dashboard.
    ============================================================ */
 
 const state = { type: 'blood', group: '', organ: 'kidney', city: '' };
 let results = [];
+let searchRequest = 0;
 
 document.addEventListener('DOMContentLoaded', start);
 
@@ -59,7 +60,8 @@ function drawControls() {
 
 /* ---------- live search ---------- */
 
-function search() {
+async function search() {
+  const refresh = ++searchRequest;
   const box = el('res-box');
   el('btn-contact').style.display = 'none';
   el('post-hint').style.display = 'none';
@@ -73,7 +75,9 @@ function search() {
     return;
   }
 
-  results = searchDonors({ type: state.type, bloodGroup: state.group, organ: state.organ, city: state.city });
+  const rows = await api('search', { type: state.type, bloodGroup: state.group, organ: state.organ, city: state.city });
+  if (refresh !== searchRequest) return;
+  results = rows;
   const what = state.type === 'organ' ? `${state.organ} donors for ${state.group}` : `donors for ${state.group}`;
   el('res-title').textContent = `🎯 ${what.charAt(0).toUpperCase() + what.slice(1)}`;
   el('res-count').textContent = `${results.length} found`;
@@ -106,8 +110,8 @@ function search() {
 
 /* ---------- open requests (so visitors also see the wider picture) ---------- */
 
-function renderOpenRequests() {
-  const rows = listRequests().filter(r => r.status === 'pending' || r.status === 'matched').slice(0, 6);
+async function renderOpenRequests() {
+  const rows = await api('openRequests');
   el('open-box').innerHTML = rows.length ? `
     <table class="table">
       <thead><tr><th>Needed at</th><th>Need</th><th>Group</th><th>Units</th><th>Urgency</th><th>City</th></tr></thead>
@@ -127,6 +131,7 @@ function renderOpenRequests() {
 /* ---------- contact / post request ---------- */
 
 let contactDonorIds = [];
+let contactNeed;
 
 function openContact(withDonors) {
   if (!state.group) return;
@@ -135,12 +140,13 @@ function openContact(withDonors) {
 
   if (withDonors && !contactDonorIds.length) { toast('Tick at least one donor first.', 'warn'); return; }
 
+  contactNeed = { type: state.type, bloodGroup: state.group, organ: state.organ };
   const need = state.type === 'organ' ? `${state.organ} (patient ${state.group})` : `${state.group} blood`;
   el('mc-title').textContent = withDonors ? '📞 Contact donors' : '📣 Post an open request';
   el('mc-summary').innerHTML = withDonors
     ? `Needed: <b>${esc(need)}</b> · contacting <b>${contactDonorIds.length}</b> donor${contactDonorIds.length > 1 ? 's' : ''}`
     : `Needed: <b>${esc(need)}</b> · compatible donors will see this on their dashboard`;
-  el('mc-submit').textContent = withDonors ? 'Show contact numbers' : 'Post request';
+  el('mc-submit').textContent = withDonors ? 'Send request' : 'Post request';
   el('mc-city').value = state.city;
   el('mc-error').classList.remove('show');
   el('mc-form-wrap').style.display = '';
@@ -148,7 +154,7 @@ function openContact(withDonors) {
   openModal('modal-contact');
 }
 
-function submitContact() {
+async function submitContact() {
   const err = el('mc-error'); err.classList.remove('show');
   const fail = (m) => { err.textContent = m; err.classList.add('show'); };
 
@@ -160,53 +166,55 @@ function submitContact() {
   if (!city)                   return fail('Please enter the city.');
   if (!units || units < 1)     return fail('Units must be at least 1.');
 
-  const res = contactDonors({
-    requesterName: name, requesterPhone: phone, hospitalName: el('mc-hospital').value,
-    city, type: state.type, bloodGroup: state.group, organ: state.organ,
-    units, urgency: el('mc-urgency').value
-  }, contactDonorIds);
+  const button = el('mc-submit');
+  button.disabled = true;
+  const res = await action('postRequest', {
+    ...contactNeed, requesterName: name, requesterPhone: phone,
+    hospitalName: el('mc-hospital').value, city, units,
+    urgency: el('mc-urgency').value, donorIds: contactDonorIds
+  });
+  button.disabled = false;
+  if (!res.ok) return fail(res.error);
 
   el('mc-form-wrap').style.display = 'none';
   el('mc-done-wrap').style.display = '';
-  el('mc-title').textContent = contactDonorIds.length ? '✅ Donor contacts' : '✅ Request posted';
-
-  el('mc-done').innerHTML = contactDonorIds.length ? `
-    <p style="margin-bottom:12px">Request <b>#${res.requestId}</b> saved. Call these donors now — they can see your request too:</p>
-    <table class="table">
-      <thead><tr><th>Donor</th><th>Group</th><th>City</th><th>Phone</th></tr></thead>
-      <tbody>${res.donors.map(d => `
-        <tr><td><b>${esc(d.full_name)}</b></td>
-            <td><span class="badge badge-group">${esc(d.blood_group)}</span></td>
-            <td>${esc(d.city)}</td>
-            <td><a href="tel:${esc(d.phone || '')}">${esc(d.phone || '—')}</a></td></tr>`).join('')}
-      </tbody>
-    </table>`
-    : `<p>Request <b>#${res.requestId}</b> is live. Compatible donors will see it on their dashboard and can call you on
-       <b>${esc(phone)}</b>.</p>`;
+  el('mc-title').textContent = '✅ Request posted';
+  el('t-id').value = res.requestId;
+  el('t-code').value = res.trackingCode;
+  el('mc-done').innerHTML = `
+    <p>Request <b>#${res.requestId}</b> is live. Contact details become available after a donor accepts.</p>
+    <p style="margin-top:10px">Save your private tracking code to check the request later.</p>
+    <input aria-label="Private tracking code" readonly value="${esc(res.trackingCode)}">
+  `;
 
   search();            // donors just linked drop out of the list
   renderOpenRequests();
 }
 
-/* ---------- track / cancel my request (v6) ---------- */
+/* ---------- track / cancel my request ---------- */
 document.addEventListener('DOMContentLoaded', () => {
-  el('t-go').addEventListener('click', () => renderTrack(parseInt(el('t-id').value, 10), el('t-phone').value));
+  el('t-go').addEventListener('click', () => renderTrack(parseInt(el('t-id').value, 10), el('t-code').value.trim()));
 });
-function renderTrack(id, phone) {
-  const o = el('t-out'), t = trackRequest(id, phone);
+async function renderTrack(id, code) {
+  const o = el('t-out');
+  if (!Number.isSafeInteger(id) || id < 1 || code.length !== 43) {
+    o.innerHTML = '<div class="form-error show">Enter your request number and private tracking code.</div>';
+    return;
+  }
+  const t = await action('trackRequest', { id, code });
   if (!t.ok) { o.innerHTML = `<div class="form-error show">${esc(t.error)}</div>`; return; }
   const r = t.request, open = r.status === 'pending' || r.status === 'matched';
   o.innerHTML = `<p>Request <b>#${r.request_id}</b> · ${esc(r.blood_group)} ${esc(r.type)} · ${r.units} unit(s) · ${statusBadge(r.status)}</p>` +
     (t.donors.length
       ? `<table class="table"><thead><tr><th>Donor</th><th>Phone</th></tr></thead><tbody>${t.donors.map(d =>
           `<tr><td>${esc(d.full_name)}</td><td>${esc(d.phone || '—')}</td></tr>`).join('')}</tbody></table>`
-      : '<p class="hint">No donor linked yet — compatible donors can see your request on their dashboard.</p>') +
+      : '<p class="hint">No donor has shared contact details yet.</p>') +
     (open ? '<button class="btn btn-danger btn-sm" id="t-cancel" style="margin-top:10px">Cancel my request</button>' : '');
-  if (open) el('t-cancel').addEventListener('click', () => {
+  if (open) el('t-cancel').addEventListener('click', async () => {
     if (!confirm('Cancel this request? This cannot be undone.')) return;
-    const res = cancelMyRequest(id, phone);
+    const res = await action('cancelRequest', { id, code });
     if (!res.ok) { toast('⚠️ ' + esc(res.error), 'error'); return; }
     toast('Request cancelled.', 'success');
-    renderTrack(id, phone); search(); renderOpenRequests();
+    renderTrack(id, code); search(); renderOpenRequests();
   });
 }

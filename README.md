@@ -1,54 +1,29 @@
-# LifeLink: Organ & Blood Matching System
+# LifeLink — Organ & Blood Matching System
 
-LifeLink is a web application that connects people who need blood or organs with compatible donors. It is a DBMS-focused project built only with HTML, CSS, JavaScript and SQL. The database is SQLite, running in the browser through [sql.js](https://github.com/sql-js/sql.js), so no server or installation is needed.
+LifeLink is an academic donor-matching application with ranked donor search, donor and administrator dashboards, request tracking, and blood stock accounting. Its HTML, CSS, and JavaScript use a same-origin API backed by SQLite on the server.
 
-## Features
+## Run locally
 
-- **Public donor search.** Anyone can pick a patient's blood group (and optionally a city) and see compatible donors ranked by exact group, then compatible groups, then city. No login is required.
-- **Contact and requests.** A seeker leaves a name and phone number to receive the selected donors' contact details, or posts an open request that compatible donors see on their dashboard.
-- **Request tracking.** A seeker can check the status of a request, or cancel it, using the request number and phone number.
-- **Donor accounts.** Donors register with a name, email and password, then complete and edit their profile (blood group, organ, age, city, phone) and set their availability.
-- **Donation approval.** Donors record donations, and the administrator approves or rejects them. Approved donations update the blood stock automatically.
-- **Blood stock.** Stock per blood group with OK, LOW and OUT status. Fulfilling a blood request deducts stock.
-- **Admin dashboard.** Statistics, charts, critical requests, request and donor management, password reset, an audit log, database export and system reset.
-- **Privacy.** Passwords are stored as salted SHA-256 hashes. Search results show only a donor's first name and last initial, and a donor's phone number is revealed only after the seeker provides their own contact details.
+Requires Node.js 24. Run `npm start` and visit `http://localhost:8931`. Run `npm test` to check authorization, privacy, and the matching and stock workflows. Keep the generated database in `data/` or set `LIFELINK_DB_PATH` to a private path outside the served files.
 
-## Getting started
+Public signup creates donor accounts. The first administrator is provisioned by the server operator through `npm run admin`, with `LIFELINK_ADMIN_EMAIL`, `LIFELINK_ADMIN_NAME`, and `LIFELINK_ADMIN_PASSWORD` supplied privately to the command. The command refuses to promote an existing donor or replace an administrator.
 
-### Requirements
+## Use LifeLink
 
-A modern web browser (Chrome, Edge or Firefox). No installation, server or internet connection is needed to run the project.
+- Search for blood or organ matches without an account. Choose donors to contact, or post an open request for compatible donors.
+- Save the private tracking code to check or cancel a request. Contact details become available after the donor accepts and consents to share them.
+- Register and sign in as a donor to manage your profile, respond to requests, and record donations.
+- Sign in as the provisioned administrator to manage requests, review recorded donations, and view the audit log.
 
-### Run locally
+The older offline prototype stored data separately in each browser. Its accounts and records stay in the original browser. They are not automatically imported into the shared database, and old accounts must register again.
 
-Download the project files and extract them to a folder, then open `index.html` in your browser.
+## Deployment
 
-To serve the project over HTTP instead:
+Railway runs the API and keeps the SQLite database on the persistent volume mounted at `/data`. The service uses one replica and checks `/health` before a deployment becomes active. Netlify builds the static pages and proxies `/api/*` to the Railway HTTPS origin in `netlify.toml`. Keep both production deploys connected to the same release.
 
-- **Windows:** run `start-server.bat`, then open `http://127.0.0.1:8931`.
-- **macOS / Linux:** run `python3 -m http.server 8931` in the project folder, then open `http://127.0.0.1:8931`.
+Reserve the administrator address with the Railway variable `LIFELINK_ADMIN_EMAIL`. To provision through Railway, the authorized operator can supply `LIFELINK_ADMIN_NAME` and a one-time deployment variable `LIFELINK_ADMIN_PASSWORD`. After the first successful login, remove the password variable and redeploy. Future deploys do not reset the administrator's credentials.
 
-### First use
-
-The database is created automatically and starts empty, apart from the blood-compatibility reference table.
-
-1. Open **Login** and choose **Set up the administrator account**.
-2. Create the administrator account. You are taken to the admin dashboard.
-3. Donors register from **Donate**. Seekers can search without an account.
-
-### Resetting data
-
-Data is stored in the browser's local storage, separately for each browser and each address (`file://` and `http://` are different). To clear everything, open `reset.html`.
-
-## Technologies
-
-| Layer | Technology |
-|---|---|
-| Structure | HTML5 |
-| Styling | CSS3 |
-| Logic | JavaScript (no framework) |
-| Database | SQLite via sql.js, with SQL for the schema, queries, triggers and views |
-| Charts | Chart.js |
+See the [security audit](docs/security-audit.md) for findings and verification scope.
 
 ## Database design
 
@@ -84,31 +59,10 @@ Primary and foreign keys, `UNIQUE` emails, `NOT NULL` fields, and `CHECK` constr
 
 ### Key query
 
-`searchDonors()` in `js/db.js` joins `Donor`, `Users` and `CompatibilityRule`, orders results by match quality, city and age, and uses `NOT EXISTS` to skip donors already linked to an open request.
+`searchDonors()` in `server/database.mjs` joins `Donor`, `Users` and `CompatibilityRule`, orders results by match quality, city and age, and uses `NOT EXISTS` to skip donors already linked to an open request.
 
-The full schema is in `docs/schema.sql`, and the normalization steps (1NF to 3NF) are in `docs/normalization.md`.
-
-## Project structure
-
-```
-index.html            Home page with live statistics
-find.html             Donor search, contact, request tracking
-register.html         Donor sign-up (and one-time admin setup)
-login.html            Login
-donor.html            Donor dashboard
-admin.html            Admin dashboard
-reset.html            Clears all data in the current browser
-start-server.bat      Optional local server (Windows)
-css/                  style.css, theme-editorial.css
-js/                   db.js, auth.js, ui.js, find.js, donor.js, admin.js
-vendor/               sql-asm.js (sql.js), chart.umd.min.js (Chart.js)
-server/               serve.ps1 used by start-server.bat
-docs/                 schema.sql, normalization.md
-```
+The server schema is in `server/schema.sql`, and the normalization steps (1NF to 3NF) are in `docs/normalization.md`.
 
 ## Limitations
 
-- Data is stored per browser and is not shared between devices, because the project uses no server.
-- Passwords are hashed in the browser, which is suitable for a student project but not for production use.
-- Donors and hospitals are not independently verified.
-- This is an academic prototype and is not intended for real medical emergencies.
+Donors and hospitals are not independently verified. LifeLink is an academic prototype and is not intended for real medical emergencies.

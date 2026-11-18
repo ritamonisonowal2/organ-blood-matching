@@ -1,0 +1,7 @@
+[build]
+command = "npm run build:netlify"
+publish = "dist"
+
+[build.environment]
+NODE_VERSION = "24"
+LIFELINK_API_URL = "https://organ-blood-matching-production.up.railway.app"

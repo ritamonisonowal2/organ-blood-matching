@@ -11,15 +11,14 @@ async function start() {
   session = await bootPage('donor');
   if (!session) return;
 
-  el('btn-delete-account').addEventListener('click', () => {
+  el('btn-delete-account').addEventListener('click', async () => {
     if (!confirm('Delete your account permanently? Your profile, donation history and login will be removed. This cannot be undone.')) return;
-    const res = deleteDonorAccount(session.user_id);
+    const res = await action('deleteProfile');
     if (!res.ok) { toast('⚠️ ' + esc(res.error), 'error'); return; }
-    clearSession();
     location.href = 'index.html';
   });
 
-  me = getDonorByUser(session.user_id);
+  me = await api('donorProfile');
   if (!me) { showOnboarding(); return; }   // new account → suggestions first, details second
 
   el('loading').style.display = 'none';
@@ -36,8 +35,8 @@ async function start() {
   renderDonations();
   renderTip();
 
-  el('btn-refresh').addEventListener('click', () => {
-    renderRequests();
+  el('btn-refresh').addEventListener('click', async () => {
+    await renderRequests();
     toast('Requests refreshed', 'info');
   });
 
@@ -48,6 +47,19 @@ async function start() {
   }
 
   el('donate-save').addEventListener('click', saveDonation);
+  el('requests-box').addEventListener('click', async event => {
+    const button = event.target.closest('button[data-accept]');
+    if (!button) return;
+    if (!confirm('Accept this request and share your profile name and phone with the requester?')) return;
+    button.disabled = true;
+    const result = await action('acceptRequest', { id: Number(button.dataset.accept) });
+    if (!result.ok) {
+      toast(esc(result.error), 'error');
+      button.disabled = false;
+      return;
+    }
+    await renderRequests();
+  });
 }
 
 /* ---------- first-time donor: suggestions first, details second ---------- */
@@ -70,14 +82,19 @@ function showOnboarding() {
     el('ob-groups').querySelectorAll('button').forEach(b => b.onclick = () => { group = b.dataset.g; draw(); suggest(); });
   };
 
-  function suggest() {
+  let suggestionRequest = 0;
+  async function suggest() {
+    const refresh = ++suggestionRequest;
     const box = el('sug-box');
     if (!group) {
       el('sug-count').textContent = '';
       box.innerHTML = emptyState('👆', 'Pick your blood group', 'We will show every open request you could help with — before you fill in anything else.');
       return;
     }
-    const rows = suggestRequests(group, el('ob-organ').value, el('ob-city').value.trim());
+    const rows = await api('suggestions', {
+      group, organ: el('ob-organ').value, city: el('ob-city').value.trim()
+    });
+    if (refresh !== suggestionRequest) return;
     el('sug-count').textContent = `${rows.length} request${rows.length === 1 ? '' : 's'}`;
     if (!rows.length) {
       box.innerHTML = emptyState('🕊️', 'No open requests for this choice right now',
@@ -104,7 +121,7 @@ function showOnboarding() {
   el('ob-organ').addEventListener('change', suggest);
   el('ob-city').addEventListener('input', suggest);
 
-  el('ob-form').addEventListener('submit', (e) => {
+  el('ob-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const err = el('ob-error'); err.classList.remove('show');
     const fail = (m) => { err.textContent = m; err.classList.add('show'); };
@@ -115,8 +132,10 @@ function showOnboarding() {
     if (!age || age < 18 || age > 65)    return fail('Age must be between 18 and 65.');
     if (phone && !/^\d{10}$/.test(phone)) return fail('Phone number must be exactly 10 digits (or leave it empty).');
 
-    saveDonorProfile(session.user_id, { bloodGroup: group, organ: el('ob-organ').value,
-                                        age, city: el('ob-city').value.trim(), phone });
+    const result = await action('saveProfile', {
+      bloodGroup: group, organ: el('ob-organ').value, age, city: el('ob-city').value.trim(), phone
+    });
+    if (!result.ok) return fail(result.error);
     toast('Profile saved — you are now visible to people searching for donors 🎉', 'success');
     location.reload();
   });
@@ -164,9 +183,18 @@ function renderProfile() {
     <button class="btn btn-outline btn-sm" id="btn-edit" style="margin-top:14px">✏️ Edit profile</button>`;
 
   el('btn-edit').addEventListener('click', openEdit);
-  el('avail-switch').addEventListener('change', (e) => {
-    setDonorAvailability(me.donor_id, e.target.checked);
-    me.available = e.target.checked ? 1 : 0;
+  el('avail-switch').addEventListener('change', async (e) => {
+    const input = e.target;
+    const available = input.checked;
+    input.disabled = true;
+    const result = await action('availability', { available });
+    input.disabled = false;
+    if (!result.ok) {
+      input.checked = Boolean(me.available);
+      toast(esc(result.error), 'error');
+      return;
+    }
+    me.available = available ? 1 : 0;
     el('avail-label').innerHTML = me.available
       ? '<span class="badge badge-available">Available</span>'
       : '<span class="badge badge-unavailable">Unavailable</span>';
@@ -179,9 +207,9 @@ function renderProfile() {
 
 /* ---------- open compatible requests ---------- */
 
-function renderRequests() {
+async function renderRequests() {
   const box = el('requests-box');
-  const rows = openRequestsForDonor(me);
+  const rows = await api('donorRequests');
 
   el('req-count').textContent = `${rows.length} result${rows.length === 1 ? '' : 's'}`;
 
@@ -207,7 +235,9 @@ function renderRequests() {
             <td>${r.priority === 0
                   ? '<span class="badge badge-fulfilled">Full match</span>'
                   : '<span class="badge badge-urgency-urgent">Partial match</span>'}</td>
-            <td>${esc(r.requester_name)}<br><a href="tel:${esc(r.requester_phone)}">${esc(r.requester_phone)}</a></td>
+            <td>${r.accepted
+              ? `${esc(r.requester_name)}<br><a href="tel:${esc(r.requester_phone)}">${esc(r.requester_phone)}</a>`
+              : r.canAccept ? `<button class="btn btn-outline btn-sm" data-accept="${r.request_id}">Accept request</button>` : '—'}</td>
             <td>${esc(r.city)}${r.city === me.city ? ' <span class="badge badge-available">near you</span>' : ''}</td>
           </tr>`).join('')}
       </tbody>
@@ -216,7 +246,7 @@ function renderRequests() {
 
 /* ---------- contextual donor tip (e.g. universal donor) ---------- */
 
-function renderTip() {
+async function renderTip() {
   const box = el('tip-box');
   let icon, title, text;
 
@@ -227,7 +257,8 @@ function renderTip() {
     icon = '🧲'; title = "You're a universal recipient";
     text = 'AB+ can receive blood from every group — and AB plasma can help every patient too.';
   } else {
-    const recips = recipientGroupsFor(me.blood_group);
+    const { rules } = await api('publicOverview');
+    const recips = rules.filter(rule => rule.donor_group === me.blood_group).map(rule => rule.recipient_group);
     icon = '💞';
     title = `${me.blood_group} helps ${recips.length} recipient group${recips.length === 1 ? '' : 's'}`;
     text = `Your blood can be given to patients with: ${recips.join(', ')}.`;
@@ -252,9 +283,9 @@ function renderTip() {
 
 /* ---------- donation history ---------- */
 
-function renderDonations() {
+async function renderDonations() {
   const box = el('donations-box');
-  const rows = listDonationsForDonor(me.donor_id);
+  const rows = await api('donationHistory');
 
   el('donation-count').textContent = rows.length ? `${rows.length} donation${rows.length > 1 ? 's' : ''}` : '';
 
@@ -281,7 +312,7 @@ function renderDonations() {
 
 /* ---------- record donation (fires the TRIGGER) ---------- */
 
-function saveDonation() {
+async function saveDonation() {
   const units = parseInt(el('donate-units').value, 10);
 
   /* eligibility guard — whole blood can normally be donated only every ~90 days */
@@ -292,13 +323,16 @@ function saveDonation() {
     }
   }
 
-  const res = recordDonation(me.donor_id, units);
+  const button = el('donate-save');
+  button.disabled = true;
+  const res = await action('recordDonation', { units });
+  button.disabled = false;
   if (!res.ok) { toast(esc(res.error), 'error'); return; }
 
   closeModal('modal-donate');
   toast('✅ Donation recorded — waiting for admin approval. Stock updates once it is approved.', 'success');
 
-  me = getDonorByUser(session.user_id);   // refresh last_donation_date
+  me = await api('donorProfile');   // refresh last_donation_date
   renderProfile();
   renderDonations();
 }
@@ -312,13 +346,14 @@ function openEdit() {
   el('ep-save').onclick = saveEdit;
   openModal('modal-edit');
 }
-function saveEdit() {
+async function saveEdit() {
   const err = el('ep-error'), fail = (m) => { err.textContent = m; err.classList.add('show'); };
   const age = parseInt(el('ep-age').value, 10), phone = el('ep-phone').value.trim(), city = el('ep-city').value.trim();
   if (!city) return fail('Please enter your city.');
   if (!age || age < 18 || age > 65) return fail('Age must be between 18 and 65.');
   if (phone && !/^\d{10}$/.test(phone)) return fail('Phone number must be exactly 10 digits (or leave it empty).');
-  saveDonorProfile(session.user_id, { bloodGroup: el('ep-group').value, organ: el('ep-organ').value, age, city, phone });
+  const result = await action('saveProfile', { bloodGroup: el('ep-group').value, organ: el('ep-organ').value, age, city, phone });
+  if (!result.ok) return fail(result.error);
   toast('Profile updated ✅', 'success');
   setTimeout(() => location.reload(), 600);
 }

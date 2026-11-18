@@ -234,12 +234,11 @@
   <footer class="footer">
     <div class="footer-inner">
       <span class="f-brand">🩸 <span><b>LifeLink</b> — Organ &amp; Blood Matching System</span></span>
-      <span>Connecting people in need with donors when every minute counts · <a href="reset.html" style="color:inherit; text-decoration:underline">Reset data</a></span>
+      <span>Connecting people in need with donors when every minute counts</span>
     </div>
   </footer>
 
   <!-- ============ SCRIPTS ============ -->
-  <script src="vendor/sql-asm.js"></script>
   <script src="vendor/chart.umd.min.js"></script>
   <script src="js/db.js"></script>
   <script src="js/ui.js"></script>
@@ -258,14 +257,15 @@
         mountUserChip();
 
         /* ---- live stat pills ---- */
-        const s = dashboardStats();
+        const overview = await api('publicOverview');
+        const s = overview.stats;
         el('stat-donors').textContent    = s.totalDonors;
         el('stat-hospitals').textContent = s.openRequests;
         el('stat-units').textContent     = s.totalUnits;
         el('stat-fulfilled').textContent = s.fulfilledRequests;
 
         /* ---- live stock chips ---- */
-        const stock = getStock();
+        const stock = overview.stock;
         el('stock-chips').innerHTML = stock.map(r => `
           <div class="stock-chip ${r.stock_status !== 'OK' ? 'warn' : ''}">
             <span class="chip-group">${esc(r.blood_group)}</span>
@@ -276,14 +276,14 @@
           </div>`).join('');
 
         /* ---- request status cards ---- */
-        const st = {}; requestStatusCounts().forEach(r => st[r.status] = r.cnt);
+        const st = {}; overview.requestCounts.forEach(r => st[r.status] = r.cnt);
         el('req-pending').textContent   = st.pending   || 0;
         el('req-matched').textContent   = st.matched   || 0;
         el('req-fulfilled').textContent = st.fulfilled || 0;
 
         /* ---- instant blood match ---- */
-        const rules   = listCompatibilityRules();
-        const summary = {}; donorGroupSummary().forEach(r => summary[r.blood_group] = r);
+        const rules   = overview.rules;
+        const summary = {}; overview.donorGroups.forEach(r => summary[r.blood_group] = r);
         const units   = {}; stock.forEach(r => units[r.blood_group] = r.units);
         const groups  = stock.map(r => r.blood_group);
         let picked = groups.includes('O-') ? 'O-' : groups[0];
@@ -311,8 +311,11 @@
             chip(r.recipient_group, () => r.recipient_group === picked ? 'same group' : 'compatible', r.recipient_group === picked)).join('');
         }
         drawMatch();
-        function drawHelp() {
-          const rows = suggestRequests(picked, 'blood', '').slice(0, 4);
+        let helpRequest = 0;
+        async function drawHelp() {
+          const refresh = ++helpRequest;
+          const rows = (await api('suggestions', { group: picked, organ: 'blood' })).slice(0, 4);
+          if (refresh !== helpRequest) return;
           el('help-group').textContent = picked;
           el('help-box').innerHTML = rows.length ? `
             <div class="table-wrap"><table class="table">
@@ -329,7 +332,7 @@
 
         const ORGANS = ['kidney', 'liver', 'heart', 'lung', 'pancreas', 'cornea'];
         const organCount = {};
-        all("SELECT organ, COUNT(*) AS c FROM Donor WHERE available = 1 AND organ <> 'blood' GROUP BY organ")
+        overview.organCounts
           .forEach(r => organCount[r.organ] = r.c);
         el('organ-chips').innerHTML = ORGANS.map(o => `
           <span class="match-chip ${organCount[o] ? '' : 'none'}">

@@ -74,7 +74,7 @@
           <h2 id="res-title">🎯 Donors</h2>
           <div class="chip-row">
             <span class="count-pill" id="res-count"></span>
-            <button class="btn btn-primary btn-sm" id="btn-contact" style="display:none">📞 Get contact numbers</button>
+            <button class="btn btn-primary btn-sm" id="btn-contact" style="display:none">📨 Send a request</button>
           </div>
         </div>
         <p class="hint" style="margin:0 18px 10px; font-size:12.5px; color:var(--muted)"><b>#1 is the best match:</b> same blood group first, then other compatible groups, then donors in your city. “Compatible (O-)” means that donor's group can safely give to the patient.</p>
@@ -88,10 +88,10 @@
 
       <div class="card card-pad">
         <h2 style="font-size:16px; margin-bottom:6px">🔎 Track or cancel my request</h2>
-        <p class="hint" style="margin-bottom:12px">Enter the request number you were given and the phone number you used.</p>
+        <p class="hint" style="margin-bottom:12px">Enter the request number you were given and the private tracking code from your confirmation.</p>
         <div class="field-row">
           <div class="field"><label for="t-id">Request number</label><input type="number" id="t-id" min="1" placeholder="e.g. 1"></div>
-          <div class="field"><label for="t-phone">Your phone</label><input type="tel" id="t-phone" maxlength="10" inputmode="numeric" placeholder="10 digits"></div>
+          <div class="field"><label for="t-code">Private tracking code</label><input type="text" id="t-code" maxlength="43" autocomplete="off" spellcheck="false" placeholder="Code from your request confirmation"></div>
         </div>
         <button class="btn btn-outline btn-sm" id="t-go">Check status</button>
         <div id="t-out" style="margin-top:14px"></div>
@@ -152,11 +152,11 @@
               </select>
             </div>
           </div>
-          <p class="hint" style="font-size:12.5px; color:var(--muted)">Your contact details are shared only with the donors you choose, so they can call you back.</p>
+          <p class="hint" style="font-size:12.5px; color:var(--muted)">A donor who accepts your request can see the phone number you enter and call you.</p>
         </div>
         <div class="modal-foot">
           <button class="btn btn-ghost" onclick="closeModal('modal-contact')">Cancel</button>
-          <button class="btn btn-primary" id="mc-submit">Show contact numbers</button>
+          <button class="btn btn-primary" id="mc-submit">Send request</button>
         </div>
       </div>
 
@@ -169,7 +169,6 @@
     </div>
   </div>
 
-  <script src="vendor/sql-asm.js"></script>
   <script src="js/db.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/auth.js"></script>

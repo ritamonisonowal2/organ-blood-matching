@@ -1,39 +1,26 @@
-/* ============================================================
-   auth.js — session handling and role-based access control
-   ============================================================ */
-
-const SESSION_KEY = 'lifelink_session';
+/* The API sets and revokes the session cookie. This is display state only. */
+let currentUser = null;
 
 function getSession() {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) {
-    return null;
+  return currentUser;
+}
+
+async function initDatabase() {
+  currentUser = await api('session');
+}
+
+async function loginUser(email, password, remember) {
+  const result = await action('login', { email, password, remember });
+  if (result.ok) currentUser = result.user;
+  return result;
+}
+
+async function doLogout() {
+  const result = await action('logout');
+  if (!result.ok) {
+    toast(esc(result.error), 'error');
+    return;
   }
-}
-
-/**
- * Persist the session. remember=true → localStorage (survives browser restarts);
- * remember=false → sessionStorage (this tab only).
- */
-function setSession(user, remember = true) {
-  const payload = JSON.stringify({
-    user_id:   user.user_id,
-    role:      user.role,
-    full_name: user.full_name,
-    email:     user.email
-  });
-  if (remember) localStorage.setItem(SESSION_KEY, payload);
-  else          sessionStorage.setItem(SESSION_KEY, payload);
-}
-
-function clearSession() {
-  localStorage.removeItem(SESSION_KEY);
-  sessionStorage.removeItem(SESSION_KEY);
-}
-
-function doLogout() {
-  clearSession();
+  currentUser = null;
   location.href = 'index.html';
 }

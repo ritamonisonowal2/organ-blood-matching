@@ -1,0 +1,12 @@
+{
+  "name": "lifelink-organ-blood-matching",
+  "version": "1.0.0",
+  "private": true,
+  "engines": { "node": "24.x" },
+  "scripts": {
+    "start": "node server/index.mjs",
+    "admin": "node server/provision-admin.mjs",
+    "test": "node --test",
+    "build:netlify": "node server/build-netlify.mjs"
+  }
+}

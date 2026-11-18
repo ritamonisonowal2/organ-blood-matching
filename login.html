@@ -56,25 +56,20 @@
 
       <div class="auth-foot">
         New to LifeLink? <a href="register.html">Create your account</a>
-        <span id="setup-link" style="display:none"><br>First time running this system? <a href="register.html?setup=admin">Set up the administrator account</a></span>
       </div>
     </div>
   </main>
 
-  <script src="vendor/sql-asm.js"></script>
   <script src="js/db.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/auth.js"></script>
   <script>
     (async function () {
-      await initDatabase();
-      mountUserChip();
-      if (!adminExists()) el('setup-link').style.display = '';
-
-      /* already logged in? go straight to the right dashboard */
-      const s = getSession();
-      if (s && sessionUserExists(s)) location.replace(homeForRole(s.role));
-      else if (s) clearSession();
+      initDatabase().then(() => {
+        mountUserChip();
+        const s = getSession();
+        if (s) location.replace(homeForRole(s.role));
+      }).catch(() => {});
 
       /* show / hide password */
       el('pw-toggle').addEventListener('click', () => {
@@ -109,15 +104,12 @@
         btn.textContent = 'Checking…';
 
         try {
-          const res = await loginUser(email, password);
+          const res = await loginUser(email, password, el('remember').checked);
           if (!res.ok) {
             errBox.textContent = res.error;
             errBox.classList.add('show');
             return;
           }
-          /* "Keep me signed in": localStorage survives browser restarts,
-             sessionStorage only lasts for this tab session. */
-          setSession(res.user, el('remember').checked);
           toast(`Welcome back, ${esc(res.user.full_name)}!`, 'success');
           location.href = homeForRole(res.user.role);
         } catch (err) {

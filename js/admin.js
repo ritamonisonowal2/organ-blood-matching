@@ -3,9 +3,8 @@
    ============================================================ */
 
 let session = null;
+let overview = null;
 const charts = {};   // Chart.js instances
-
-/* BLOOD_GROUPS comes from db.js (shared global) */
 
 /* doughnut centre label — shows the total request count */
 const doughnutCenter = {
@@ -38,21 +37,45 @@ async function start() {
   el('loading').style.display = 'none';
   el('content').style.display = '';
 
-  renderAll();
+  await renderAll();
 
-  el('btn-export').addEventListener('click', () => {
-    downloadDatabaseFile();
+  el('btn-export').addEventListener('click', async () => {
+    await downloadDatabaseFile();
     toast('Backup downloaded as <b>lifelink.sqlite</b>.', 'success');
   });
 
   el('btn-reset').addEventListener('click', async () => {
-    if (!confirm('Reset the system? All accounts, donors, requests, donations and stock are permanently deleted, and the platform returns to a clean state.')) return;
-    await resetDatabase();          // also clears the saved login
-    location.href = 'index.html';   // back to the home page
+    const confirmation = prompt('This permanently deletes donor accounts, requests, donations, and stock. Type RESET DATA to confirm.');
+    if (confirmation !== 'RESET DATA') return;
+    const result = await action('adminReset', { confirm: confirmation });
+    if (!result.ok) { toast(esc(result.error), 'error'); return; }
+    location.href = 'login.html';
+  });
+
+  el('requests-box').addEventListener('change', event => {
+    const select = event.target.closest('select[data-id]');
+    if (select) adminSetStatus(Number(select.dataset.id), select);
+  });
+  el('requests-box').addEventListener('click', event => {
+    const button = event.target.closest('button[data-delete]');
+    if (button) adminDeleteRequest(Number(button.dataset.delete));
+  });
+  el('donors-box').addEventListener('click', event => {
+    const button = event.target.closest('button[data-id]');
+    if (button) adminRemoveDonor(Number(button.dataset.id), button.dataset.name);
+  });
+  el('users-box').addEventListener('click', event => {
+    const button = event.target.closest('button[data-id]');
+    if (button) resetUserPassword(Number(button.dataset.id), button.dataset.name);
+  });
+  el('pending-box').addEventListener('click', event => {
+    const button = event.target.closest('button[data-decision]');
+    if (button) adminReview(Number(button.dataset.id), button.dataset.decision);
   });
 }
 
-function renderAll() {
+async function renderAll() {
+  overview = await api('adminOverview');
   renderStats();
   renderCritical();
   renderRequestsTable();
@@ -67,7 +90,7 @@ function renderAll() {
 /* ---------- stat cards + alerts ---------- */
 
 function renderStats() {
-  const s = dashboardStats();
+  const s = overview.stats;
 
   el('stat-grid').innerHTML = `
     <div class="stat-card"><div class="stat-icon red">🩸</div>
@@ -88,7 +111,7 @@ function renderStats() {
       <div><div class="stat-value">${s.totalDonations}</div><div class="stat-label">Donations approved</div></div></div>`;
 
   /* low-stock alert */
-  const low = getStock().filter(r => r.stock_status !== 'OK');
+  const low = overview.stock.filter(r => r.stock_status !== 'OK');
   el('alert-slot').innerHTML = low.length
     ? `<div class="alert alert-danger">⚠️ <span>
          <b>Low stock warning:</b>&nbsp; ${low.map(r =>
@@ -100,7 +123,7 @@ function renderStats() {
 /* ---------- critical requests (VIEW) ---------- */
 
 function renderCritical() {
-  const rows = criticalRequests();
+  const rows = overview.critical;
   el('critical-box').innerHTML = rows.length ? `
     <table class="table">
       <thead><tr><th>#</th><th>Requested by</th><th>Place</th><th>Need</th><th>Group</th><th>Units</th><th>Status</th><th>Created</th></tr></thead>
@@ -124,7 +147,7 @@ function renderCritical() {
 /* ---------- all requests (admin can change status) ---------- */
 
 function renderRequestsTable() {
-  const rows = listRequests();
+  const rows = overview.requests;
 
   el('requests-box').innerHTML = rows.length ? `
     <table class="table">
@@ -146,20 +169,20 @@ function renderRequestsTable() {
             <td>
               <select class="btn btn-outline btn-sm" style="padding:6px 8px"
                       ${(r.status === 'fulfilled' || r.status === 'cancelled') ? 'disabled title="This request is closed"' : ''}
-                      onchange="adminSetStatus(${r.request_id}, this)">
+                      data-id="${r.request_id}">
                 ${['pending','matched','fulfilled','cancelled'].map(s =>
                   `<option value="${s}" ${s === r.status ? 'selected' : ''}>${s}</option>`).join('')}
               </select>
             </td>
-            <td><button class="btn btn-danger btn-sm" onclick="adminDeleteRequest(${r.request_id})">Delete</button></td>
+            <td><button class="btn btn-danger btn-sm" data-delete="${r.request_id}">Delete</button></td>
           </tr>`).join('')}
       </tbody>
     </table>`
     : emptyState('🗂️', 'No requests in the system yet', 'Requests made through the Find Donor page will appear here.');
 }
 
-function adminSetStatus(requestId, selectEl) {
-  const res = updateRequestStatus(requestId, selectEl.value);
+async function adminSetStatus(requestId, selectEl) {
+  const res = await action('adminSetStatus', { id: requestId, status: selectEl.value });
   if (!res.ok) {
     toast('⚠️ ' + esc(res.error), 'error');
     renderRequestsTable();          // resets the dropdown to the DB value
@@ -170,17 +193,17 @@ function adminSetStatus(requestId, selectEl) {
   renderAll();
 }
 
-function adminRemoveDonor(userId, name) {
+async function adminRemoveDonor(userId, name) {
   if (!confirm(`Delete donor "${name}" permanently? Their profile, donation history and login are removed.`)) return;
-  const res = deleteDonorAccount(userId);
+  const res = await action('adminDeleteDonor', { id: userId });
   if (!res.ok) { toast('⚠️ ' + esc(res.error), 'error'); return; }
   toast(`Donor <b>${esc(name)}</b> deleted.`, 'success');
   renderAll();
 }
 
-function adminDeleteRequest(requestId) {
+async function adminDeleteRequest(requestId) {
   if (!confirm(`Delete request #${requestId} permanently?`)) return;
-  const res = deleteRequest(requestId);
+  const res = await action('adminDeleteRequest', { id: requestId });
   if (!res.ok) { toast('⚠️ ' + esc(res.error), 'error'); return; }
   toast(`Request #${requestId} deleted.`, 'success');
   renderAll();
@@ -189,7 +212,7 @@ function adminDeleteRequest(requestId) {
 /* ---------- donors & users ---------- */
 
 function renderDonorsTable() {
-  const rows = listDonors();
+  const rows = overview.donors;
   el('donor-count').textContent = rows.length ? `${rows.length} donors` : '';
   el('donors-box').innerHTML = rows.length ? `
     <table class="table">
@@ -206,7 +229,7 @@ function renderDonorsTable() {
             <td>${d.available
               ? '<span class="badge badge-available">Available</span>'
               : '<span class="badge badge-unavailable">Unavailable</span>'}</td>
-            <td><button class="btn btn-danger btn-sm" onclick="adminRemoveDonor(${d.user_id}, '${esc(d.full_name).replace(/'/g, '')}')">Delete</button></td>
+            <td><button class="btn btn-danger btn-sm" data-id="${d.user_id}" data-name="${esc(d.full_name)}">Delete</button></td>
           </tr>`).join('')}
       </tbody>
     </table>`
@@ -214,7 +237,7 @@ function renderDonorsTable() {
 }
 
 function renderUsersTable() {
-  const rows = listUsers();
+  const rows = overview.users;
   el('user-count').textContent = `${rows.length} account${rows.length === 1 ? '' : 's'}`;
   const roleIcon = { admin: '🛡️', donor: '🩸' };
   el('users-box').innerHTML = `
@@ -229,16 +252,16 @@ function renderUsersTable() {
             <td>${roleIcon[u.role] || ''} ${esc(u.role)}</td>
             <td style="white-space:nowrap">${fmtDate(u.created_at)}</td>
             <td style="white-space:nowrap">${u.role === 'admin' ? '' :
-              `<button class="btn btn-ghost btn-sm" onclick="resetUserPassword(${u.user_id}, '${esc(u.full_name).replace(/'/g, '')}')">🔑 Reset password</button>`}</td>
+              `<button class="btn btn-ghost btn-sm" data-id="${u.user_id}" data-name="${esc(u.full_name)}">🔑 Reset password</button>`}</td>
           </tr>`).join('')}
       </tbody>
     </table>`;
 }
 
 async function resetUserPassword(userId, name) {
-  const pw = prompt(`Set a new password for ${name} (min 6 characters):`);
+  const pw = prompt(`Set a new password for ${name} (12 to 128 characters):`);
   if (pw === null) return;
-  const res = await adminResetPassword(userId, pw);
+  const res = await action('adminResetPassword', { id: userId, password: pw });
   if (!res.ok) { toast('⚠️ ' + esc(res.error), 'error'); return; }
   toast(`Password updated for <b>${esc(name)}</b>.`, 'success');
 }
@@ -247,7 +270,7 @@ async function resetUserPassword(userId, name) {
 
 function renderCompatTable() {
   /* recipient (rows) x donor (columns) grid built from the CompatibilityRule table */
-  const rules = listCompatibilityRules();
+  const rules = overview.rules;
   const ok = {}; rules.forEach(r => ok[r.recipient_group + '>' + r.donor_group] = r.priority);
   el('compat-box').innerHTML = `
     <table class="table compat-grid">
@@ -275,7 +298,7 @@ function drawCharts() {
   const RED = '#c4402f';
 
   /* donors by group — two GROUP BY datasets from the summary VIEW */
-  const dg = donorGroupSummary();
+  const dg = overview.donorGroups;
   const donorLabels = BLOOD_GROUPS.filter(g => dg.some(r => r.blood_group === g));
   const dgMap = Object.fromEntries(dg.map(r => [r.blood_group, r]));
   makeChart('chart-donors', 'bar', donorLabels, [
@@ -284,7 +307,7 @@ function drawCharts() {
   ]);
 
   /* requests by status — GROUP BY, total shown in the doughnut centre */
-  const rs = requestStatusCounts();
+  const rs = overview.requestCounts;
   const statusColors = { pending: '#d9a93a', matched: '#4a6f93', fulfilled: '#5b7f4a', cancelled: '#a99b8b' };
   const totalRequests = rs.reduce((a, r) => a + r.cnt, 0);
   makeChart('chart-status', 'doughnut', rs.map(r => r.status), [
@@ -292,7 +315,7 @@ function drawCharts() {
   ], { doughnutCenter: { value: totalRequests } });
 
   /* stock — colour per low-stock status from the VIEW */
-  const st = getStock();
+  const st = overview.stock;
   const barColors = st.map(r =>
     r.stock_status === 'OUT' ? '#c4402f' : r.stock_status === 'LOW' ? '#d9a93a' : '#5b7f4a');
   makeChart('chart-stock', 'bar', st.map(r => r.blood_group), [
@@ -341,7 +364,7 @@ function makeChart(canvasId, type, labels, datasets, extra = {}) {
 
 /* ---------- donation approval + audit log (v6) ---------- */
 function renderPendingDonations() {
-  const rows = listPendingDonations();
+  const rows = overview.pending;
   el('pending-box').innerHTML = rows.length ? `
     <table class="table">
       <thead><tr><th>#</th><th>Donor</th><th>Group</th><th>Units</th><th>Recorded</th><th></th></tr></thead>
@@ -349,19 +372,19 @@ function renderPendingDonations() {
         <tr><td class="num">${d.donation_id}</td><td><b>${esc(d.full_name)}</b></td>
             <td><span class="badge badge-group">${esc(d.blood_group)}</span></td><td class="num">${d.units}</td>
             <td style="white-space:nowrap">${fmtDateTime(d.donation_date)}</td>
-            <td style="white-space:nowrap"><button class="btn btn-primary btn-sm" onclick="adminReview(${d.donation_id},'approved')">Approve</button>
-              <button class="btn btn-danger btn-sm" onclick="adminReview(${d.donation_id},'rejected')">Reject</button></td></tr>`).join('')}
+            <td style="white-space:nowrap"><button class="btn btn-primary btn-sm" data-id="${d.donation_id}" data-decision="approved">Approve</button>
+              <button class="btn btn-danger btn-sm" data-id="${d.donation_id}" data-decision="rejected">Reject</button></td></tr>`).join('')}
       </tbody></table>`
     : emptyState('✅', 'No donations waiting', 'New donations appear here for your approval.');
 }
-function adminReview(id, decision) {
-  const res = reviewDonation(id, decision);
+async function adminReview(id, decision) {
+  const res = await action('adminReview', { id, decision });
   if (!res.ok) { toast('⚠️ ' + esc(res.error), 'error'); return; }
   toast(decision === 'approved' ? 'Donation approved — stock updated by the trigger.' : 'Donation rejected.', 'success');
   renderAll();
 }
 function renderAudit() {
-  const rows = listAuditLog();
+  const rows = overview.audit;
   el('audit-box').innerHTML = rows.length ? `
     <table class="table">
       <thead><tr><th>When</th><th>Table</th><th>Record</th><th>Action</th><th>Old</th><th>New</th></tr></thead>
