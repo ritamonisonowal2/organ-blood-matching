@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="light dark">
+  <script src="js/ui.js"></script>
   <title>Register — LifeLink</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/theme-editorial.css">
@@ -31,8 +32,8 @@
     <div class="auth-card">
       <div class="auth-logo">🩸</div>
       <h1>Become a donor</h1>
-      <p class="auth-sub">Takes 20 seconds. Just the basics now — you'll add your blood group and city
-         after signing in, and see who needs you straight away. <b>Looking for a donor?</b> <a href="find.html">No account needed — search here</a>.</p>
+      <p class="auth-sub">Create your account, then add your blood group and city to start matching.
+         Looking for help? <a href="find.html">Find a donor without an account</a>.</p>
 
       <div class="form-error" id="reg-error"></div>
 
@@ -63,7 +64,6 @@
   </main>
 
   <script src="js/db.js"></script>
-  <script src="js/ui.js"></script>
   <script src="js/auth.js"></script>
   <script>
     (async function () {

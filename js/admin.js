@@ -19,14 +19,32 @@ const doughnutCenter = {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = "700 26px Georgia, 'Times New Roman', serif";
-    ctx.fillStyle = '#1d1815';
+    ctx.fillStyle = chartTheme().ink;
     ctx.fillText(String(chart.options.plugins.doughnutCenter?.value ?? ''), x, y);
     ctx.restore();
   }
 };
 Chart.register(doughnutCenter);
-Chart.defaults.color = '#5f5247';
-Chart.defaults.borderColor = 'rgba(35,28,23,.08)';
+Chart.defaults.font.family = 'Arial, sans-serif';
+
+document.addEventListener('lifelink:themechange', () => {
+  if (!overview) return;
+  const theme = chartTheme();
+  const donors = charts['chart-donors'];
+  if (donors) {
+    donors.data.datasets[0].backgroundColor = theme.secondary;
+    donors.data.datasets[1].backgroundColor = theme.accent;
+  }
+  const requests = charts['chart-status'];
+  if (requests) {
+    requests.data.datasets[0].backgroundColor = requests.data.labels.map(status => theme[status] || theme.cancelled);
+    requests.data.datasets[0].borderColor = theme.surface;
+  }
+  const stock = charts['chart-stock'];
+  if (stock) stock.data.datasets[0].backgroundColor = overview.stock.map(row =>
+    row.stock_status === 'OUT' ? theme.danger : row.stock_status === 'LOW' ? theme.pending : theme.fulfilled);
+  Object.values(charts).forEach(updateChartAppearance);
+});
 
 document.addEventListener('DOMContentLoaded', start);
 
@@ -295,35 +313,35 @@ function renderCompatTable() {
 /* ---------- charts (Chart.js) ---------- */
 
 function drawCharts() {
-  const RED = '#c4402f';
+  const theme = chartTheme();
 
   /* donors by group — two GROUP BY datasets from the summary VIEW */
   const dg = overview.donorGroups;
   const donorLabels = BLOOD_GROUPS.filter(g => dg.some(r => r.blood_group === g));
   const dgMap = Object.fromEntries(dg.map(r => [r.blood_group, r]));
   makeChart('chart-donors', 'bar', donorLabels, [
-    { label: 'Total',     data: donorLabels.map(g => dgMap[g].total_donors),     backgroundColor: RED },
-    { label: 'Available', data: donorLabels.map(g => dgMap[g].available_donors), backgroundColor: '#d8c9b0' }
+    { label: 'Total',     data: donorLabels.map(g => dgMap[g].total_donors),     backgroundColor: theme.secondary },
+    { label: 'Available', data: donorLabels.map(g => dgMap[g].available_donors), backgroundColor: theme.accent }
   ]);
 
   /* requests by status — GROUP BY, total shown in the doughnut centre */
   const rs = overview.requestCounts;
-  const statusColors = { pending: '#d9a93a', matched: '#4a6f93', fulfilled: '#5b7f4a', cancelled: '#a99b8b' };
   const totalRequests = rs.reduce((a, r) => a + r.cnt, 0);
   makeChart('chart-status', 'doughnut', rs.map(r => r.status), [
-    { data: rs.map(r => r.cnt), backgroundColor: rs.map(r => statusColors[r.status] || '#6b757c'), borderColor: '#fbf7ef', borderWidth: 3 }
+    { data: rs.map(r => r.cnt), backgroundColor: rs.map(r => theme[r.status] || theme.cancelled), borderColor: theme.surface, borderWidth: 3 }
   ], { doughnutCenter: { value: totalRequests } });
 
   /* stock — colour per low-stock status from the VIEW */
   const st = overview.stock;
   const barColors = st.map(r =>
-    r.stock_status === 'OUT' ? '#c4402f' : r.stock_status === 'LOW' ? '#d9a93a' : '#5b7f4a');
+    r.stock_status === 'OUT' ? theme.danger : r.stock_status === 'LOW' ? theme.pending : theme.fulfilled);
   makeChart('chart-stock', 'bar', st.map(r => r.blood_group), [
     { label: 'Units', data: st.map(r => r.units), backgroundColor: barColors }
   ]);
 }
 
 function makeChart(canvasId, type, labels, datasets, extra = {}) {
+  const theme = chartTheme();
   if (charts[canvasId]) { charts[canvasId].destroy(); delete charts[canvasId]; }
 
   /* nothing to draw yet → friendly message instead of a blank canvas */
@@ -350,13 +368,14 @@ function makeChart(canvasId, type, labels, datasets, extra = {}) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      color: theme.text,
       plugins: {
-        legend: { position: type === 'doughnut' ? 'right' : 'bottom' },
+        legend: { position: type === 'doughnut' ? 'right' : 'bottom', labels: { color: theme.text } },
         ...extra
       },
       scales: type === 'doughnut' ? {} : {
-        x: { grid: { display: false } },
-        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(35,28,23,.08)' } }
+        x: { grid: { display: false }, ticks: { color: theme.text }, border: { color: theme.grid } },
+        y: { beginAtZero: true, ticks: { precision: 0, color: theme.text }, grid: { color: theme.grid }, border: { color: theme.grid } }
       }
     }
   });
