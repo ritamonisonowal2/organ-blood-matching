@@ -5,7 +5,7 @@
 /* Loaded in the head so the saved appearance applies before the first paint. */
 const APPEARANCE_KEY = 'lifelink-appearance';
 const deviceAppearance = window.matchMedia('(prefers-color-scheme: dark)');
-let appearanceChoice = 'system';
+let appearanceChoice = 'light';
 try {
   const saved = localStorage.getItem(APPEARANCE_KEY);
   if (['light', 'dark', 'system'].includes(saved)) appearanceChoice = saved;
@@ -20,11 +20,12 @@ function syncAppearanceControls() {
   const button = document.querySelector('.theme-toggle');
   if (button) {
     const label = dark ? 'Switch to light theme' : 'Switch to dark theme';
-    button.setAttribute('aria-label', label);
+    button.setAttribute('aria-label', 'Dark theme');
+    button.setAttribute('aria-checked', String(dark));
     button.title = label;
-    button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${dark
-      ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>'
-      : '<path d="M20.5 14A8.5 8.5 0 0 1 10 3.5 8.5 8.5 0 1 0 20.5 14Z"/>'}</svg>`;
+    button.innerHTML = '<span class="theme-thumb" aria-hidden="true"></span>'
+      + '<svg class="theme-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>'
+      + '<svg class="theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14A8.5 8.5 0 0 1 10 3.5 8.5 8.5 0 1 0 20.5 14Z"/></svg>';
   }
   const device = document.getElementById('device-theme');
   if (device) device.checked = appearanceChoice === 'system';
@@ -56,7 +57,7 @@ deviceAppearance.addEventListener('change', () => {
 });
 window.addEventListener('storage', event => {
   if (event.key !== APPEARANCE_KEY && event.key !== null) return;
-  appearanceChoice = ['light', 'dark', 'system'].includes(event.newValue) ? event.newValue : 'system';
+  appearanceChoice = ['light', 'dark', 'system'].includes(event.newValue) ? event.newValue : 'light';
   applyAppearance();
 });
 
@@ -302,6 +303,7 @@ function renderNavLinks() {
     const themeToggle = document.createElement('button');
     themeToggle.className = 'theme-toggle';
     themeToggle.type = 'button';
+    themeToggle.setAttribute('role', 'switch');
     themeToggle.addEventListener('click', () => setAppearance(currentAppearance() === 'dark' ? 'light' : 'dark'));
     inner.appendChild(themeToggle);
   }
