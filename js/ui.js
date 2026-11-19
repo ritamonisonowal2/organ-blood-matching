@@ -2,6 +2,88 @@
    ui.js — small shared helpers used by every page
    ============================================================ */
 
+/* Loaded in the head so the saved appearance applies before the first paint. */
+const APPEARANCE_KEY = 'lifelink-appearance';
+const deviceAppearance = window.matchMedia('(prefers-color-scheme: dark)');
+let appearanceChoice = 'system';
+try {
+  const saved = localStorage.getItem(APPEARANCE_KEY);
+  if (['light', 'dark', 'system'].includes(saved)) appearanceChoice = saved;
+} catch { /* Appearance still works when browser storage is unavailable. */ }
+
+function currentAppearance() {
+  return appearanceChoice === 'system' ? (deviceAppearance.matches ? 'dark' : 'light') : appearanceChoice;
+}
+
+function syncAppearanceControls() {
+  const dark = currentAppearance() === 'dark';
+  const button = document.querySelector('.theme-toggle');
+  if (button) {
+    const label = dark ? 'Switch to light theme' : 'Switch to dark theme';
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${dark
+      ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>'
+      : '<path d="M20.5 14A8.5 8.5 0 0 1 10 3.5 8.5 8.5 0 1 0 20.5 14Z"/>'}</svg>`;
+  }
+  const device = document.getElementById('device-theme');
+  if (device) device.checked = appearanceChoice === 'system';
+  const status = document.getElementById('appearance-status');
+  if (status) status.textContent = appearanceChoice === 'system'
+    ? `Following your device's ${dark ? 'dark' : 'light'} theme.`
+    : `${dark ? 'Dark' : 'Light'} theme saved for this browser.`;
+}
+
+function applyAppearance() {
+  const theme = currentAppearance();
+  document.documentElement.dataset.theme = theme;
+  const meta = document.querySelector('meta[name="color-scheme"]');
+  if (meta) meta.content = theme;
+  syncAppearanceControls();
+  document.dispatchEvent(new CustomEvent('lifelink:themechange', { detail: { theme } }));
+}
+
+function setAppearance(choice) {
+  if (!['light', 'dark', 'system'].includes(choice)) return;
+  appearanceChoice = choice;
+  try { localStorage.setItem(APPEARANCE_KEY, choice); } catch { /* Keep the choice for this page. */ }
+  applyAppearance();
+}
+
+applyAppearance();
+deviceAppearance.addEventListener('change', () => {
+  if (appearanceChoice === 'system') applyAppearance();
+});
+window.addEventListener('storage', event => {
+  if (event.key !== APPEARANCE_KEY && event.key !== null) return;
+  appearanceChoice = ['light', 'dark', 'system'].includes(event.newValue) ? event.newValue : 'system';
+  applyAppearance();
+});
+
+function chartTheme() {
+  const styles = getComputedStyle(document.documentElement);
+  const value = name => styles.getPropertyValue(name).trim();
+  return {
+    ink: value('--ink'), text: value('--brown-soft'), grid: value('--line'), surface: value('--card'),
+    accent: value('--accent'), secondary: value('--chart-secondary'), pending: value('--yellow'),
+    matched: value('--blue'), fulfilled: value('--green'), cancelled: value('--muted'), danger: value('--red')
+  };
+}
+
+function updateChartAppearance(chart) {
+  if (!chart) return;
+  const theme = chartTheme();
+  chart.options.color = theme.text;
+  if (chart.options.plugins.legend) chart.options.plugins.legend.labels.color = theme.text;
+  for (const scale of Object.values(chart.options.scales || {})) {
+    scale.ticks = { ...scale.ticks, color: theme.text };
+    scale.grid = { ...scale.grid, color: theme.grid };
+    scale.border = { ...scale.border, color: theme.grid };
+  }
+  chart.stop();
+  chart.update('none');
+}
+
 /** Shorthand getElementById */
 function el(id) { return document.getElementById(id); }
 
@@ -193,6 +275,19 @@ function renderNavLinks() {
   box.innerHTML = tabs.map(t =>
     `<a href="${t.href}" class="${isActive(t) ? 'active' : ''}"${isActive(t) ? ' aria-current="page"' : ''}>${navIcon(t.icon)}<span>${t.label}</span></a>`
   ).join('');
+  if (s) {
+    box.insertAdjacentHTML('beforeend', `<button type="button" class="nav-logout">${navIcon('arrow')}<span>Log out</span></button>`);
+    box.querySelector('.nav-logout').addEventListener('click', doLogout);
+  }
+  box.insertAdjacentHTML('beforeend', `
+    <div class="appearance-settings">
+      <p class="appearance-label">Appearance</p>
+      <label class="device-theme-label"><input type="checkbox" id="device-theme"> Use device theme</label>
+      <p class="appearance-status" id="appearance-status" aria-live="polite"></p>
+    </div>`);
+  box.querySelector('#device-theme').addEventListener('change', event => {
+    setAppearance(event.target.checked ? 'system' : currentAppearance());
+  });
 
   let start = inner.querySelector('.nav-start');
   if (!start) {
@@ -202,6 +297,14 @@ function renderNavLinks() {
   }
   start.href = s ? dashHref : 'register.html';
   start.innerHTML = `${s ? 'Dashboard' : 'Get started'} ${navIcon('arrow')}`;
+
+  if (!inner.querySelector('.theme-toggle')) {
+    const themeToggle = document.createElement('button');
+    themeToggle.className = 'theme-toggle';
+    themeToggle.type = 'button';
+    themeToggle.addEventListener('click', () => setAppearance(currentAppearance() === 'dark' ? 'light' : 'dark'));
+    inner.appendChild(themeToggle);
+  }
 
   let toggle = inner.querySelector('.nav-toggle');
   if (!toggle) {
@@ -246,6 +349,7 @@ function renderNavLinks() {
     window.__navHashBound = true;
     window.addEventListener('hashchange', renderNavLinks);
   }
+  syncAppearanceControls();
 }
 
 document.addEventListener('DOMContentLoaded', renderNavLinks, { once: true });
