@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="light dark">
+  <script src="js/ui.js"></script>
   <meta name="description" content="LifeLink connects people who need blood or organs with compatible donors — ranked matching, live blood stock and real-time dashboards.">
   <title>LifeLink — Organ & Blood Matching System</title>
   <link rel="stylesheet" href="css/style.css">
@@ -69,45 +70,45 @@
   <!-- ============ FEATURES — every card is a link ============ -->
   <section class="landing-section" id="features">
     <span class="section-tag">Features</span>
-    <h2>Everything a blood &amp; organ network needs</h2>
-    <p class="sub">One platform connecting people in need with donors —
-       so no request waits and no blood sits idle. Tap any card to jump straight to it.</p>
+    <h2>A clearer way to connect.</h2>
+    <p class="sub">Find a donor, follow a request or offer your help.
+       Everything starts with a simple next step.</p>
 
     <div class="feature-grid">
       <a class="feature-card" href="register.html">
         <div class="f-icon f-orange">📝</div>
         <h3>Become a donor</h3>
-        <p>Sign up with just a name, email and password. Add your blood group and city inside — and see who needs you straight away.</p>
+        <p>Create your account, complete your profile and choose when you are available to help.</p>
         <span class="f-go">Register <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
       </a>
       <a class="feature-card" href="find.html">
         <div class="f-icon f-green">🎯</div>
-        <h3>Instant donor search</h3>
-        <p>Pick a blood group — every compatible donor is ranked on the spot: exact group first, same city preferred. No login needed.</p>
+        <h3>Find a matching donor</h3>
+        <p>Search by blood group and city. Explore available matches without creating an account.</p>
         <span class="f-go">Find a donor <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
       </a>
       <a class="feature-card" href="#requests">
         <div class="f-icon f-blue">🚑</div>
         <h3>Blood &amp; organ requests</h3>
-        <p>Anyone can post a request with group, units and urgency. Status moves pending → matched → fulfilled.</p>
+        <p>Share what is needed and track the request from its first match through to completion.</p>
         <span class="f-go">See requests <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
       </a>
       <a class="feature-card" href="#stock">
         <div class="f-icon f-yellow">📦</div>
         <h3>Live blood stock</h3>
-        <p>Stock grows the moment a donation is approved and shrinks when a request is fulfilled — with low-stock warnings.</p>
+        <p>See available units by blood group, with clear low-stock and out-of-stock indicators.</p>
         <span class="f-go">View stock <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
       </a>
       <a class="feature-card" href="#analytics">
         <div class="f-icon f-brown">📊</div>
         <h3>Analytics dashboard</h3>
-        <p>Donors by blood group and request status — the whole network at a glance, drawn as live charts.</p>
+        <p>Understand the network at a glance with donor, request and stock summaries.</p>
         <span class="f-go">Open analytics <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
       </a>
       <a class="feature-card" href="login.html">
         <div class="f-icon f-red">🔐</div>
         <h3>Donor &amp; admin dashboards</h3>
-        <p>Donors manage their profile and availability; the admin oversees requests, stock and analytics — hashed passwords, zero shared access.</p>
+        <p>Donors manage their profiles and donations. Administrators review records, requests and stock.</p>
         <span class="f-go">Log in <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
       </a>
     </div>
@@ -116,9 +117,8 @@
   <!-- ============ INSTANT BLOOD MATCH ============ -->
   <section class="landing-section" id="match">
     <span class="section-tag">Instant blood match</span>
-    <h2>Who can give to whom?</h2>
-    <p class="sub">Pick a blood group to see which groups it can receive from and donate to,
-       with live counts of available donors and units in stock.</p>
+    <h2>Explore blood-group compatibility.</h2>
+    <p class="sub">Select a blood group to see compatible groups, available donors and current stock.</p>
 
     <div class="panel">
       <div class="group-picker" id="group-picker"></div>
@@ -135,11 +135,11 @@
         </div>
       </div>
       <div class="organ-row">
-        <h4>🎯 Open requests <span id="help-group">this group</span> can help with — right now</h4>
+        <h4>Requests <span id="help-group">matching</span> donors can respond to</h4>
         <div id="help-box"></div>
       </div>
       <div class="organ-row">
-        <h4>Organ donors available right now</h4>
+        <h4>Available organ donors</h4>
         <div class="match-chips" id="organ-chips"></div>
       </div>
     </div>
@@ -148,7 +148,7 @@
   <!-- ============ LIVE BLOOD STOCK ============ -->
   <section class="landing-section" id="stock">
     <span class="section-tag">Live blood stock</span>
-    <h2>Units in the network</h2>
+    <h2>Blood stock, clearly recorded.</h2>
     <p class="sub">Updates the moment a donation is approved or a request is fulfilled.</p>
     <div class="panel">
       <div class="stock-chips" id="stock-chips">
@@ -160,13 +160,13 @@
   <!-- ============ REQUESTS ============ -->
   <section class="landing-section" id="requests">
     <span class="section-tag">Blood &amp; organ requests</span>
-    <h2>From request to fulfilled</h2>
-    <p class="sub">Anyone posts a request with urgency; compatible donors are ranked and the status is tracked end to end.</p>
+    <h2>Follow every request.</h2>
+    <p class="sub">See how requests progress, from waiting for a match to completion.</p>
     <div class="panel">
       <div class="status-flow">
         <div class="status-card pending"><span>Pending</span><b id="req-pending">–</b><p>Waiting for a donor match</p></div>
-        <div class="status-card matched"><span>Matched</span><b id="req-matched">–</b><p>Donors contacted by the seeker</p></div>
-        <div class="status-card fulfilled"><span>Fulfilled</span><b id="req-fulfilled">–</b><p>Delivered — stock updated</p></div>
+        <div class="status-card matched"><span>Matched</span><b id="req-matched">–</b><p>Donor matches linked to a request</p></div>
+        <div class="status-card fulfilled"><span>Fulfilled</span><b id="req-fulfilled">–</b><p>Completed and recorded</p></div>
       </div>
       <div class="cta-stack" style="padding-bottom:0; flex-direction:row; flex-wrap:wrap;">
         <a class="cta-btn" href="find.html">Need blood? Search / post a request <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a>
@@ -179,7 +179,7 @@
   <section class="landing-section" id="analytics">
     <span class="section-tag">Analytics</span>
     <h2>The whole network at a glance</h2>
-    <p class="sub">Live charts drawn straight from the database.</p>
+    <p class="sub">A simple view of donor availability and request progress.</p>
     <div class="panel-grid">
       <div class="panel">
         <h3>Donors by blood group</h3>
@@ -199,21 +199,19 @@
   <!-- ============ HOW IT WORKS ============ -->
   <section class="landing-section" id="how">
     <h2>How it works</h2>
-    <p class="sub">From registration to transfusion in three steps.</p>
+    <p class="sub">From your first search to a request you can follow.</p>
     <div class="steps">
       <div class="step">
         <h3>Search — no login</h3>
-        <p>Choose the blood group (or organ) and city. Compatible donors are ranked instantly,
-           exact group first and nearest city next.</p>
+        <p>Choose the recipient's blood group, donation type and city. Explore matching donors with exact-group and same-city preferences.</p>
       </div>
       <div class="step">
-        <h3>Contact the donors</h3>
-        <p>Leave your name and phone, get the donors' numbers and call them. If nobody is available,
-           post an open request — donors see it on their dashboard.</p>
+        <h3>Send a request</h3>
+        <p>Share your request details. Contact information becomes available after a donor accepts and agrees to share it.</p>
       </div>
       <div class="step">
         <h3>Fulfil &amp; track</h3>
-        <p>The admin marks the request fulfilled and blood stock updates automatically through a database trigger.</p>
+        <p>Follow the status with your private code. Administrators record completion and the stock updates accordingly.</p>
       </div>
     </div>
   </section>
@@ -229,9 +227,23 @@
   <!-- ============ SCRIPTS ============ -->
   <script src="vendor/chart.umd.min.js"></script>
   <script src="js/db.js"></script>
-  <script src="js/ui.js"></script>
   <script src="js/auth.js"></script>
   <script>
+    document.addEventListener('lifelink:themechange', () => {
+      const theme = chartTheme();
+      const donors = Chart.getChart(el('chart-donors'));
+      if (donors) {
+        donors.data.datasets[0].backgroundColor = theme.secondary;
+        donors.data.datasets[1].backgroundColor = theme.accent;
+        updateChartAppearance(donors);
+      }
+      const requests = Chart.getChart(el('chart-status'));
+      if (requests) {
+        requests.data.datasets[0].backgroundColor = [theme.pending, theme.matched, theme.fulfilled, theme.cancelled];
+        requests.data.datasets[0].borderColor = theme.surface;
+        updateChartAppearance(requests);
+      }
+    });
     (async function () {
       document.getElementById('quick-search').addEventListener('submit', (e) => {
         e.preventDefault();
@@ -313,7 +325,7 @@
                 <td><span class="badge badge-group">${esc(r.blood_group)}</span></td>
                 <td class="num">${r.units}</td><td>${urgencyBadge(r.urgency)}</td><td>${esc(r.city)}</td></tr>`).join('')}
               </tbody></table></div>
-            <p class="hint" style="margin-top:12px"><a href="register.html">Sign up in 20 seconds</a> to respond — you only add your details after.</p>`
+            <p class="hint" style="margin-top:12px"><a href="register.html">Become a donor</a> to respond to a matching request.</p>`
             : '<span class="empty-note">No open blood requests for this group right now.</span>';
         }
         drawHelp();
@@ -328,7 +340,8 @@
           </span>`).join('');
 
         /* ---- charts ---- */
-        const txt = '#41483e', grid = 'rgba(21,26,20,.08)';
+        const theme = chartTheme();
+        const txt = theme.text, grid = theme.grid;
         Chart.defaults.color = txt;
         Chart.defaults.font.family = 'Arial, sans-serif';
 
@@ -337,8 +350,8 @@
             type: 'bar',
             data: { labels: groups,
               datasets: [
-                { label: 'Registered', data: groups.map(g => (summary[g] ? summary[g].total_donors : 0)),     backgroundColor: '#c2cbb8', borderRadius: 4 },
-                { label: 'Available',  data: groups.map(g => (summary[g] ? summary[g].available_donors : 0)), backgroundColor: '#1d4937',  borderRadius: 4 } ] },
+                { label: 'Registered', data: groups.map(g => (summary[g] ? summary[g].total_donors : 0)),     backgroundColor: theme.secondary, borderRadius: 4 },
+                { label: 'Available',  data: groups.map(g => (summary[g] ? summary[g].available_donors : 0)), backgroundColor: theme.accent, borderRadius: 4 } ] },
             options: { maintainAspectRatio: false,
               scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: grid } } },
               plugins: { legend: { labels: { boxWidth: 12 } } } }
@@ -353,7 +366,7 @@
             type: 'doughnut',
             data: { labels: ['Pending', 'Matched', 'Fulfilled', 'Cancelled'],
               datasets: [{ data: [st.pending || 0, st.matched || 0, st.fulfilled || 0, st.cancelled || 0],
-                backgroundColor: ['#b3913f', '#638493', '#1d4937', '#a5aa9c'], borderColor: '#fcfbf6', borderWidth: 3 }] },
+                backgroundColor: [theme.pending, theme.matched, theme.fulfilled, theme.cancelled], borderColor: theme.surface, borderWidth: 3 }] },
             options: { maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
           });
         } else {
