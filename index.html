@@ -28,42 +28,30 @@
   <header class="hero" id="home">
     <div class="hero-card">
       <div class="hero-grid">
-        <div>
-          <span class="hero-tag">Your life-saving matching network</span>
-          <h1>LifeLink: Every Drop Counts, Every <em>Organ</em> Matters</h1>
+        <div class="hero-copy">
+          <span class="hero-tag">Blood &amp; organ donor network</span>
+          <h1>Find blood &amp; organ<br><em>donors, together.</em><br>Make a life-changing connection.</h1>
           <p class="lead">
-            Need blood or an organ? Search compatible donors in seconds — no login, no forms.
-            Want to help? Become a donor and see who needs you.
+            A place to find a donor, offer your help and follow every request.
+            Search by blood group and city, or join the network as a donor.
           </p>
+          <div class="hero-actions">
+            <a class="cta-btn" href="find.html">Find a donor <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a>
+            <a class="cta-btn alt" href="register.html">Become a donor</a>
+          </div>
+          <div class="hero-search">
+          <p>Already know the blood group? Start your search here.</p>
           <form class="quick-search" id="quick-search">
-            <label for="qs-group">I need</label>
+            <label for="qs-group">Patient blood group</label>
             <select id="qs-group" required>
               <option value="">Blood group…</option>
               <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
               <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
             </select>
-            <input type="text" id="qs-city" placeholder="City (optional)">
+            <input type="text" id="qs-city" placeholder="City (optional)" aria-label="City (optional)">
             <button type="submit" class="cta-btn"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg> Find donors now</button>
           </form>
-          <div class="cta-stack" style="margin-top:14px">
-            <a class="cta-btn alt" href="register.html">Become a donor <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a>
           </div>
-        </div>
-
-        <div class="hero-art" aria-hidden="true">
-          <svg viewBox="0 0 400 400">
-            <circle cx="200" cy="200" r="178" fill="none" stroke="rgba(227,236,238,.08)"/>
-            <circle cx="200" cy="200" r="138" fill="none" stroke="rgba(227,236,238,.12)"/>
-            <circle class="ring" cx="200" cy="200" r="98" fill="none" stroke="rgba(227,236,238,.9)" stroke-width="1.5"/>
-            <polyline points="22,205 110,205 128,205 142,160 160,250 178,190 196,205 400,205"
-                      fill="none" stroke="rgba(255,75,107,.28)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-            <polyline class="pulse-line" points="22,205 110,205 128,205 142,160 160,250 178,190 196,205 262,205 280,150 296,262 312,205 378,205"
-                      fill="none" stroke="#c4402f" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
-            <g class="drop-core">
-              <path d="M200 148C200 148 242 192 242 222a42 42 0 0 1-84 0C158 192 200 148 200 148Z" fill="#c4402f"/>
-              <path d="M178 224a22 22 0 0 0 20 22" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="4" stroke-linecap="round"/>
-            </g>
-          </svg>
         </div>
       </div>
 
@@ -340,17 +328,17 @@
           </span>`).join('');
 
         /* ---- charts ---- */
-        const txt = '#5f5247', grid = 'rgba(35,28,23,.08)';
+        const txt = '#41483e', grid = 'rgba(21,26,20,.08)';
         Chart.defaults.color = txt;
-        Chart.defaults.font.family = 'ui-monospace, Consolas, monospace';
+        Chart.defaults.font.family = 'Arial, sans-serif';
 
         if (s.totalDonors > 0) {
           new Chart(el('chart-donors'), {
             type: 'bar',
             data: { labels: groups,
               datasets: [
-                { label: 'Registered', data: groups.map(g => (summary[g] ? summary[g].total_donors : 0)),     backgroundColor: '#d8c9b0', borderRadius: 6 },
-                { label: 'Available',  data: groups.map(g => (summary[g] ? summary[g].available_donors : 0)), backgroundColor: '#c4402f',  borderRadius: 6 } ] },
+                { label: 'Registered', data: groups.map(g => (summary[g] ? summary[g].total_donors : 0)),     backgroundColor: '#c2cbb8', borderRadius: 4 },
+                { label: 'Available',  data: groups.map(g => (summary[g] ? summary[g].available_donors : 0)), backgroundColor: '#1d4937',  borderRadius: 4 } ] },
             options: { maintainAspectRatio: false,
               scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: grid } } },
               plugins: { legend: { labels: { boxWidth: 12 } } } }
@@ -365,7 +353,7 @@
             type: 'doughnut',
             data: { labels: ['Pending', 'Matched', 'Fulfilled', 'Cancelled'],
               datasets: [{ data: [st.pending || 0, st.matched || 0, st.fulfilled || 0, st.cancelled || 0],
-                backgroundColor: ['#d9a93a', '#4a6f93', '#5b7f4a', '#a99b8b'], borderColor: '#fbf7ef', borderWidth: 3 }] },
+                backgroundColor: ['#b3913f', '#638493', '#1d4937', '#a5aa9c'], borderColor: '#fcfbf6', borderWidth: 3 }] },
             options: { maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
           });
         } else {

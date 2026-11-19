@@ -137,9 +137,7 @@ function mountUserChip() {
 }
 
 
-/* ============================================================
-   Pill navigation — every feature is a tab (same on every page)
-   ============================================================ */
+/* Shared navigation disclosure, with the same destinations on every page. */
 
 const NAV_ICONS = {
   home:     '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
@@ -159,6 +157,9 @@ function navIcon(name) {
 function renderNavLinks() {
   const inner = document.querySelector('.nav-inner');
   if (!inner) return;
+  inner.closest('nav').setAttribute('aria-label', 'Main navigation');
+  const drop = inner.querySelector('.brand .drop');
+  if (drop) drop.innerHTML = navIcon('stock');
   let box = inner.querySelector('.nav-links');
   if (!box) {
     box = document.createElement('div');
@@ -167,7 +168,7 @@ function renderNavLinks() {
   }
   const s = getSession();
   const dashHref = s ? homeForRole(s.role) : 'login.html';
-  const page = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  const page = ((location.pathname.split('/').pop() || 'index').replace(/\.html$/i, '') + '.html').toLowerCase();
   const hash = location.hash;
 
   const tabs = [
@@ -176,7 +177,7 @@ function renderNavLinks() {
     { key: 'stock',     label: 'Blood Stock', href: 'index.html#stock',    icon: 'stock' },
     { key: 'requests',  label: 'Requests',  href: 'index.html#requests',   icon: 'requests' },
     { key: 'analytics', label: 'Analytics', href: 'index.html#analytics',  icon: 'analytics' },
-    { key: 'dash',      label: 'Dashboard', href: dashHref, icon: 'dash' }
+    { key: 'dash',      label: s ? 'Dashboard' : 'Log in', href: dashHref, icon: 'dash' }
   ];
   if (!s) tabs.push({ key: 'register', label: 'Donate', href: 'register.html', icon: 'register' });
 
@@ -190,14 +191,64 @@ function renderNavLinks() {
   };
 
   box.innerHTML = tabs.map(t =>
-    `<a href="${t.href}" class="${isActive(t) ? 'active' : ''}">${navIcon(t.icon)}<span>${t.label}</span></a>`
+    `<a href="${t.href}" class="${isActive(t) ? 'active' : ''}"${isActive(t) ? ' aria-current="page"' : ''}>${navIcon(t.icon)}<span>${t.label}</span></a>`
   ).join('');
+
+  let start = inner.querySelector('.nav-start');
+  if (!start) {
+    start = document.createElement('a');
+    start.className = 'nav-start';
+    inner.appendChild(start);
+  }
+  start.href = s ? dashHref : 'register.html';
+  start.innerHTML = `${s ? 'Dashboard' : 'Get started'} ${navIcon('arrow')}`;
+
+  let toggle = inner.querySelector('.nav-toggle');
+  if (!toggle) {
+    toggle = document.createElement('button');
+    toggle.className = 'nav-toggle';
+    toggle.type = 'button';
+    toggle.setAttribute('aria-controls', 'site-navigation');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-label', 'Open menu');
+    toggle.innerHTML = '<span></span><span></span><span></span>';
+    inner.appendChild(toggle);
+    inner.appendChild(box);
+    box.id = 'site-navigation';
+    box.hidden = true;
+
+    const close = () => {
+      box.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', 'Open menu');
+    };
+    toggle.addEventListener('click', () => {
+      const open = toggle.getAttribute('aria-expanded') !== 'true';
+      box.hidden = !open;
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    });
+    box.addEventListener('click', event => {
+      if (event.target.closest('a')) close();
+    });
+    document.addEventListener('click', event => {
+      if (!inner.contains(event.target)) close();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !box.hidden) {
+        close();
+        toggle.focus();
+      }
+    });
+  }
 
   if (!window.__navHashBound) {
     window.__navHashBound = true;
     window.addEventListener('hashchange', renderNavLinks);
   }
 }
+
+document.addEventListener('DOMContentLoaded', renderNavLinks, { once: true });
 
 
 window.addEventListener('unhandledrejection', event => {
